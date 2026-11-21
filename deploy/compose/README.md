@@ -21,7 +21,7 @@ docker compose -f deploy/compose/docker-compose.yml up -d --build
 - 首次启动/升级会自动执行 `prisma migrate deploy`。
 - 数据目录：仓库根目录 `data/`。
 - 数据库卷：`pgdata`。
-- 只暴露 Caddy 的 80/443；API 的 3000 端口也直接映射，方便调试。
+- 只暴露 Caddy 的 80/443 和 API 的 3000 端口；生产环境建议只保留 Caddy，或由自己的反向代理接管。
 
 ## 使用预构建镜像（NAS / 服务器）
 

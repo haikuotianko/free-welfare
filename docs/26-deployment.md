@@ -169,7 +169,8 @@ Docker 备份：
 
 ```bash
 docker exec -t <postgres容器> pg_dump -U welfare welfare > backup.sql
-docker run --rm -v free-welfare_pgdata:/data -v "$PWD":/backup alpine tar czf /backup/pgdata.tar.gz -C /data .
+# 卷名用 docker volume ls 查看，Compose 项目通常生成 compose_pgdata
+docker run --rm -v <pgdata卷名>:/data -v "$PWD":/backup alpine tar czf /backup/pgdata.tar.gz -C /data .
 ```
 
 原生模式备份：
