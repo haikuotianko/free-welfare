@@ -4,6 +4,7 @@
 
 ### Added
 
+- 官网新增「下载与安装」专区：自动识别当前系统并推荐 Windows 安装包、macOS 脚本、Linux/Docker/NAS 或 npm；提供安装包/源码/Compose/镜像下载入口、SHA-256 校验、逐步命令、复制按钮、方式对比和常见问题。
 - 新增多种部署方式：Docker Compose、GHCR 预构建镜像（amd64/arm64）、NAS 专用 Compose、Windows 安装包/脚本、macOS 双击启动、Linux systemd，以及 npm 手动安装；原生方式内置 PostgreSQL，不再要求单独安装数据库。安装包自带 Node.js 运行时，首次启动联网安装依赖并构建，输出在 `release/windows/Free-Welfare-Setup-<版本>.exe`。
 - 新增 `20261121100000_schema_drift` 迁移，补齐 `Run.notBefore`、`Site.registrationMode/registrationNote/runTimeoutMinutes`、`SiteAccount.disabled`、`WechatAccount.timeOffsetMinutes` 和缺失索引；修复全新数据库执行迁移后 Worker 报 `column Run.notBefore does not exist` 的问题。
 

@@ -6,7 +6,7 @@
     <title>Free Welfare · 自托管福利工具</title>
     <meta
       name="description"
-      content="Free Welfare 是一个自托管的微信小程序签到、积分和任务管理平台：多账号、应用商店、定时队列、YYB 集成和实时日志。"
+      content="Free Welfare 是一个自托管的微信小程序签到、积分和任务管理平台：支持 Windows 安装包、Docker、NAS、macOS/Linux 和 npm 部署，多账号、应用商店、定时队列、YYB 集成和实时日志。"
     />
     <meta name="theme-color" content="#070b14" />
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
@@ -25,7 +25,7 @@
         <nav class="nav">
           <a href="#features">功能</a>
           <a href="#screens">截图</a>
-          <a href="#start">快速开始</a>
+          <a href="#download">下载</a>
           <a href="#docs">文档</a>
           <a class="nav-cta" href="https://github.com/haikuotianko/free-welfare" target="_blank" rel="noreferrer">GitHub</a>
         </nav>
@@ -43,10 +43,10 @@
               定时队列、YYB 账号同步、积分统计和实时日志，全部跑在你自己的服务器上。
             </p>
             <div class="actions">
-              <a class="button primary" href="#start">开始部署</a>
+              <a class="button primary" href="#download">下载 / 部署</a>
               <a class="button ghost" href="https://github.com/haikuotianko/free-welfare" target="_blank" rel="noreferrer">查看源码</a>
             </div>
-            <p class="fine-print">Docker Compose 部署 · 数据保存在本机 · 不依赖第三方云服务</p>
+            <p class="fine-print">Windows 安装包 · Docker · macOS/Linux · NAS · 数据保存在本机</p>
           </div>
           <div class="hero-art" aria-hidden="true">
             <div class="glow glow-a"></div>
@@ -68,7 +68,7 @@
       <section class="stats wrap">
         <div class="stat"><b>104</b><span>预置应用</span></div>
         <div class="stat"><b>多账号</b><span>按账号独立配置</span></div>
-        <div class="stat"><b>Docker</b><span>一条命令部署</span></div>
+        <div class="stat"><b>全平台</b><span>Windows · macOS · NAS</span></div>
         <div class="stat"><b>MIT</b><span>开源可修改</span></div>
       </section>
 
@@ -120,48 +120,338 @@
         </div>
         <div class="shots">
           <figure class="shot shot-wide">
-            <img src="./assets/screenshots/dashboard.jpg" alt="Free Welfare 总览页面" loading="lazy" />
+            <img src="./assets/screenshots/dashboard.jpg" alt="Free Welfare 总览页面" width="2880" height="1800" loading="lazy" />
             <figcaption><b>总览</b><span>运行、积分、活动和队列一屏掌握</span></figcaption>
           </figure>
           <figure class="shot">
-            <img src="./assets/screenshots/accounts.jpg" alt="Free Welfare 账号页面" loading="lazy" />
+            <img src="./assets/screenshots/accounts.jpg" alt="Free Welfare 账号页面" width="2880" height="1800" loading="lazy" />
             <figcaption><b>账号</b><span>按应用查看签到状态、积分和详情</span></figcaption>
           </figure>
           <figure class="shot">
-            <img src="./assets/screenshots/yyb-requests.jpg" alt="Free Welfare YYB 请求页面" loading="lazy" />
+            <img src="./assets/screenshots/yyb-requests.jpg" alt="Free Welfare YYB 请求页面" width="2880" height="1800" loading="lazy" />
             <figcaption><b>YYB 请求</b><span>请求类型、成功率、账号和应用筛选</span></figcaption>
           </figure>
           <figure class="shot shot-phone">
-            <img src="./assets/screenshots/mobile.jpg" alt="Free Welfare 手机端账号页面" loading="lazy" />
+            <img src="./assets/screenshots/mobile.jpg" alt="Free Welfare 手机端账号页面" width="780" height="1688" loading="lazy" />
             <figcaption><b>手机端</b><span>底部导航、账号卡片和运行日志</span></figcaption>
           </figure>
         </div>
       </section>
 
-      <section id="start" class="section wrap">
-        <div class="start-card">
-          <div class="start-copy">
-            <p class="eyebrow"><span class="dot"></span> 快速开始</p>
-            <h2>选一种方式，跑起来。</h2>
-            <p>
-              Docker Compose、Windows 安装包、macOS/Linux 脚本和 NAS 镜像；
-              原生方式自带 PostgreSQL，不需要单独安装数据库。YYB 仍需单独部署。
-            </p>
-            <div class="start-links">
-              <a class="button primary" href="https://github.com/haikuotianko/free-welfare/blob/main/docs/26-deployment.md" target="_blank" rel="noreferrer">部署文档</a>
-              <a class="button ghost" href="https://github.com/haikuotianko/free-welfare/releases" target="_blank" rel="noreferrer">Windows 安装包</a>
-              <a class="button ghost" href="https://github.com/haikuotianko/free-welfare-scripts" target="_blank" rel="noreferrer">脚本仓库</a>
-            </div>
+      <section id="download" class="section wrap">
+        <span id="start" class="anchor-target" aria-hidden="true"></span>
+        <div class="section-head download-head">
+          <p class="eyebrow"><span class="dot"></span> 下载与安装</p>
+          <h2>选你现在的系统，直接开始。</h2>
+          <p>
+            官网会优先推荐当前系统，也可以手动选择 Windows、macOS、Linux、Docker、NAS 或 npm。
+            所有方式的数据都保存在本机；YYB 需要单独部署。
+          </p>
+        </div>
+
+        <div class="download-reco" id="download-reco" aria-live="polite">
+          <div class="reco-copy">
+            <span class="reco-kicker">当前系统 · <b id="reco-os">当前设备</b></span>
+            <h3 id="reco-title">选择适合你的安装方式</h3>
+            <p id="reco-desc">Windows 推荐安装包；macOS/Linux 可用双击脚本或 Docker；NAS 用 Docker Compose。</p>
+            <p class="reco-note">推荐基于浏览器系统信息，可能不准确；下面可以随时切换。</p>
           </div>
-          <pre class="code"><code><span class="c"># 1. 克隆</span>
-git clone https://github.com/haikuotianko/free-welfare.git
+          <div class="reco-actions">
+            <a class="button primary" id="reco-action" href="#methods">查看全部方式</a>
+            <a class="reco-alt" id="reco-alt" href="#docker">其他方式</a>
+          </div>
+        </div>
+
+        <div class="download-files">
+          <a class="file-card file-primary" href="https://github.com/haikuotianko/free-welfare/releases/download/v0.1.0/Free-Welfare-Setup-0.1.0.exe">
+            <span class="file-tag">Windows · 安装包</span>
+            <b>Free Welfare 安装包</b>
+            <span>v0.1.0 · 36.6 MB · 自带 Node 22</span>
+            <em>下载 exe <span aria-hidden="true">→</span></em>
+          </a>
+          <a class="file-card" href="https://raw.githubusercontent.com/haikuotianko/free-welfare/main/deploy/compose/docker-compose.nas.yml">
+            <span class="file-tag">NAS</span>
+            <b>NAS Compose</b>
+            <span>群晖 / 威联通 / TrueNAS</span>
+            <em>下载 yml <span aria-hidden="true">→</span></em>
+          </a>
+          <a class="file-card" href="https://github.com/haikuotianko/free-welfare/pkgs/container/free-welfare">
+            <span class="file-tag">Docker</span>
+            <b>预构建镜像</b>
+            <span>linux/amd64 · linux/arm64</span>
+            <em>查看镜像 <span aria-hidden="true">→</span></em>
+          </a>
+          <a class="file-card" href="https://github.com/haikuotianko/free-welfare/archive/refs/heads/main.zip">
+            <span class="file-tag">源码</span>
+            <b>完整源码 ZIP</b>
+            <span>GitHub main 分支</span>
+            <em>下载 ZIP <span aria-hidden="true">→</span></em>
+          </a>
+        </div>
+
+        <details class="download-check">
+          <summary>校验 Windows 安装包 SHA-256</summary>
+          <div class="check-row">
+            <code id="win-sha">3fba3f50f600f92bb8114feb6f109d59df6cfc4c22a8918fbd119873bd28ea81</code>
+            <button type="button" class="copy-btn" data-copy-target="win-sha">复制</button>
+          </div>
+        </details>
+
+        <div class="subhead-row" id="methods">
+          <h3>安装方式</h3>
+          <span>不确定选哪个时，先看当前系统推荐</span>
+        </div>
+
+        <div class="methods">
+          <article class="method-card" data-method="windows" id="windows">
+            <div class="method-top">
+              <span class="method-os os-win">WIN</span>
+              <span class="method-kind">安装包</span>
+              <span class="recommend-badge">当前系统推荐</span>
+            </div>
+            <h3>Windows 安装包</h3>
+            <p>不装 Docker、不装 Node，下载后双击安装。自带 Node.js 22，首次启动自动下载内置 PostgreSQL。</p>
+            <div class="meta-grid">
+              <div><span>适合</span><b>Windows 10/11 x64</b></div>
+              <div><span>大小</span><b>约 36.6 MB</b></div>
+              <div><span>需要</span><b>首次联网</b></div>
+              <div><span>数据</span><b>安装目录 data/</b></div>
+            </div>
+            <ol class="steps">
+              <li>下载 <code>Free-Welfare-Setup-0.1.0.exe</code>。</li>
+              <li>双击运行，安装到 <code>%LOCALAPPDATA%\Free Welfare</code>。</li>
+              <li>从开始菜单启动；首次会安装依赖、构建并初始化数据库。</li>
+              <li>浏览器打开 <code>http://localhost:3000</code>，创建管理员。</li>
+            </ol>
+            <div class="method-actions">
+              <a class="button primary sm" href="https://github.com/haikuotianko/free-welfare/releases/download/v0.1.0/Free-Welfare-Setup-0.1.0.exe">下载安装包</a>
+              <a class="link" href="https://github.com/haikuotianko/free-welfare/releases">所有版本</a>
+            </div>
+            <details class="method-notes">
+              <summary>SmartScreen、升级和卸载</summary>
+              <p>安装包未签名，SmartScreen 提示时选择“仍要运行”。覆盖安装会保留 <code>.env</code> 和 <code>data/</code>；卸载时删除安装目录和快捷方式。</p>
+            </details>
+          </article>
+
+          <article class="method-card" data-method="macos" id="macos">
+            <div class="method-top">
+              <span class="method-os os-mac">MAC</span>
+              <span class="method-kind">双击脚本</span>
+              <span class="recommend-badge">当前系统推荐</span>
+            </div>
+            <h3>macOS 双击启动</h3>
+            <p>需要 Node.js 22+；首次运行会自动安装依赖和内置 PostgreSQL。目前提供未签名脚本，没有签名 .dmg。</p>
+            <div class="meta-grid">
+              <div><span>适合</span><b>macOS Intel / Apple Silicon</b></div>
+              <div><span>需要</span><b>Node.js 22+</b></div>
+              <div><span>数据库</span><b>内置 PostgreSQL</b></div>
+              <div><span>数据</span><b>data/</b></div>
+            </div>
+            <ol class="steps">
+              <li>安装 Node 22：<code>brew install node@22</code>，或从 nodejs.org 下载。</li>
+              <li>下载源码 ZIP 并解压，或使用下面的 <code>git clone</code>。</li>
+              <li>双击 <code>deploy/macos/start.command</code>；首次打开被拦截时右键 → 打开。</li>
+              <li>浏览器打开 <code>http://localhost:3000</code>。</li>
+            </ol>
+            <div class="code-wrap">
+              <pre class="code" id="macos-code"><code>git clone https://github.com/haikuotianko/free-welfare.git
 cd free-welfare
+chmod +x deploy/macos/start.command
+./deploy/macos/start.command</code></pre>
+              <button type="button" class="copy-btn" data-copy-target="macos-code">复制</button>
+            </div>
+            <div class="method-actions">
+              <a class="button primary sm" href="https://github.com/haikuotianko/free-welfare/archive/refs/heads/main.zip">下载源码 ZIP</a>
+              <a class="link" href="https://github.com/haikuotianko/free-welfare/blob/main/deploy/macos/README.md">macOS 说明</a>
+            </div>
+            <details class="method-notes">
+              <summary>Gatekeeper、数据和停止</summary>
+              <p>如果系统提示“无法打开”，右键脚本选择“打开”。数据在项目 <code>data/</code>；停止时在终端按 <code>Ctrl+C</code>。</p>
+            </details>
+          </article>
 
-<span class="c"># 2. 配置（至少填加密密钥、数据库密码、YYB）</span>
+          <article class="method-card" data-method="linux" id="linux">
+            <div class="method-top">
+              <span class="method-os os-linux">LNX</span>
+              <span class="method-kind">原生 / systemd</span>
+              <span class="recommend-badge">当前系统推荐</span>
+            </div>
+            <h3>Linux 原生 / systemd</h3>
+            <p>适合单机 Linux；Node.js 22+，内置 PostgreSQL。服务器更推荐 Docker；已经有 Node 时这条路径最轻。</p>
+            <div class="meta-grid">
+              <div><span>适合</span><b>Debian/Ubuntu/Fedora</b></div>
+              <div><span>需要</span><b>Node.js 22+</b></div>
+              <div><span>数据库</span><b>内置 PostgreSQL</b></div>
+              <div><span>数据</span><b>data/</b></div>
+            </div>
+            <ol class="steps">
+              <li>安装 Node.js 22+ 和 <code>git</code>。</li>
+              <li>克隆仓库，执行下面的启动脚本。</li>
+              <li>首次会安装依赖、构建并初始化数据库。</li>
+              <li>访问 <code>http://服务器IP:3000</code>；长期运行可配 systemd。</li>
+            </ol>
+            <div class="code-wrap">
+              <pre class="code" id="linux-code"><code>git clone https://github.com/haikuotianko/free-welfare.git
+cd free-welfare
+chmod +x deploy/linux/start.sh
+./deploy/linux/start.sh</code></pre>
+              <button type="button" class="copy-btn" data-copy-target="linux-code">复制</button>
+            </div>
+            <div class="method-actions">
+              <a class="button primary sm" href="https://github.com/haikuotianko/free-welfare/blob/main/deploy/linux/README.md">Linux / systemd 说明</a>
+              <a class="link" href="#docker">改用 Docker</a>
+            </div>
+            <details class="method-notes">
+              <summary>systemd 常驻</summary>
+              <p>项目内提供 <code>deploy/linux/free-welfare.service</code>。创建 <code>freewelfare</code> 用户、复制 service、<code>systemctl enable --now free-welfare</code> 即可；完整命令见说明。</p>
+            </details>
+          </article>
+
+          <article class="method-card method-featured" data-method="docker" id="docker">
+            <div class="method-top">
+              <span class="method-os os-docker">DOCKER</span>
+              <span class="method-kind">推荐服务器</span>
+              <span class="recommend-badge">当前系统推荐</span>
+            </div>
+            <h3>Docker Compose</h3>
+            <p>一条命令带起 PostgreSQL、API、Worker 和 Caddy；Windows、macOS、Linux、NAS 通用，服务器和 NAS 首选。</p>
+            <div class="meta-grid">
+              <div><span>适合</span><b>全平台 / 服务器 / NAS</b></div>
+              <div><span>需要</span><b>Docker</b></div>
+              <div><span>数据库</span><b>容器 PostgreSQL</b></div>
+              <div><span>端口</span><b>80/443 + 3000</b></div>
+            </div>
+            <ol class="steps">
+              <li>安装 Docker Desktop 或 Docker Engine。</li>
+              <li>克隆仓库，复制并编辑 <code>deploy/compose/.env</code>。</li>
+              <li>执行下面的命令，首次会构建镜像。</li>
+              <li>访问 <code>http://服务器IP/</code>，或直接访问 <code>:3000</code>。</li>
+            </ol>
+            <div class="code-wrap">
+              <pre class="code" id="docker-code"><code>git clone https://github.com/haikuotianko/free-welfare.git
+cd free-welfare
 cp deploy/compose/.env.example deploy/compose/.env
-
-<span class="c"># 3. 启动（含 PostgreSQL、API、Worker、Caddy）</span>
+# 编辑 .env：加密密钥、数据库密码、YYB
 docker compose -f deploy/compose/docker-compose.yml up -d --build</code></pre>
+              <button type="button" class="copy-btn" data-copy-target="docker-code">复制</button>
+            </div>
+            <p class="code-caption">已经拉取预构建镜像时：</p>
+            <div class="code-wrap">
+              <pre class="code" id="docker-pull-code"><code>docker compose -f deploy/compose/docker-compose.yml pull
+docker compose -f deploy/compose/docker-compose.yml up -d --no-build</code></pre>
+              <button type="button" class="copy-btn" data-copy-target="docker-pull-code">复制</button>
+            </div>
+            <div class="method-actions">
+              <a class="button primary sm" href="https://github.com/haikuotianko/free-welfare/blob/main/docs/26-deployment.md#2-docker-compose推荐">部署文档</a>
+              <a class="link" href="https://github.com/haikuotianko/free-welfare/pkgs/container/free-welfare">GHCR 镜像</a>
+            </div>
+            <details class="method-notes">
+              <summary>端口、升级和备份</summary>
+              <p>NAS 上 80/443 被占用时改 <code>CADDY_HTTP_PORT</code> / <code>CADDY_HTTPS_PORT</code>；宿主机 API 端口用 <code>API_HOST_PORT</code>。升级执行 <code>git pull</code> 后再 <code>up -d --build</code>；备份用 <code>pg_dump</code> 加 <code>data/</code>。</p>
+            </details>
+          </article>
+
+          <article class="method-card" data-method="nas" id="nas">
+            <div class="method-top">
+              <span class="method-os os-nas">NAS</span>
+              <span class="method-kind">群晖 / 威联通 / TrueNAS</span>
+              <span class="recommend-badge">当前系统推荐</span>
+            </div>
+            <h3>NAS / Docker</h3>
+            <p>使用预构建镜像和命名卷，不需要在 NAS 上编译。适合群晖 Container Manager、QNAP Container Station、TrueNAS 或 Portainer。</p>
+            <div class="meta-grid">
+              <div><span>适合</span><b>ARM64 / x86 NAS</b></div>
+              <div><span>需要</span><b>Docker</b></div>
+              <div><span>数据库</span><b>容器 PostgreSQL</b></div>
+              <div><span>端口</span><b>API_HOST_PORT</b></div>
+            </div>
+            <ol class="steps">
+              <li>下载 <code>docker-compose.nas.yml</code> 和 <code>.env.example</code>。</li>
+              <li>把 <code>.env.example</code> 改名为 <code>.env</code>，填写数据库密码、YYB、APP_URL。</li>
+              <li>在 NAS 的 Container Manager / Portainer 新建项目，导入 compose 和 .env。</li>
+              <li>启动后访问 <code>http://NAS地址:3000/</code>；端口冲突时改 <code>API_HOST_PORT</code>。</li>
+            </ol>
+            <div class="code-wrap">
+              <pre class="code" id="nas-code"><code>curl -O https://raw.githubusercontent.com/haikuotianko/free-welfare/main/deploy/compose/docker-compose.nas.yml
+curl -O https://raw.githubusercontent.com/haikuotianko/free-welfare/main/deploy/compose/.env.example
+mv .env.example .env</code></pre>
+              <button type="button" class="copy-btn" data-copy-target="nas-code">复制</button>
+            </div>
+            <div class="method-actions">
+              <a class="button primary sm" href="https://raw.githubusercontent.com/haikuotianko/free-welfare/main/deploy/compose/docker-compose.nas.yml">下载 NAS Compose</a>
+              <a class="link" href="https://github.com/haikuotianko/free-welfare/blob/main/docs/26-deployment.md#3-docker-预构建镜像--nas">NAS 部署文档</a>
+            </div>
+            <details class="method-notes">
+              <summary>ARM64、卷和反向代理</summary>
+              <p>镜像支持 arm64；三个服务使用 <code>fw-pgdata</code>、<code>fw-data</code> 命名卷。NAS 已有反向代理时只暴露 <code>API_HOST_PORT</code>，不要再开 Caddy。</p>
+            </details>
+          </article>
+
+          <article class="method-card" data-method="npm" id="npm">
+            <div class="method-top">
+              <span class="method-os os-npm">NPM</span>
+              <span class="method-kind">手动 / 二次开发</span>
+              <span class="recommend-badge">当前系统推荐</span>
+            </div>
+            <h3>npm 手动安装</h3>
+            <p>已有 Node.js 22+，想自己控制依赖、反向代理或改代码。仓库同时支持 pnpm 和 npm，内置 PostgreSQL 启动器。</p>
+            <div class="meta-grid">
+              <div><span>适合</span><b>开发者 / 自定义部署</b></div>
+              <div><span>需要</span><b>Node.js 22+ / npm</b></div>
+              <div><span>数据库</span><b>内置或外部 PostgreSQL</b></div>
+              <div><span>数据</span><b>data/</b></div>
+            </div>
+            <ol class="steps">
+              <li>安装 Node.js 22+，克隆仓库。</li>
+              <li>安装依赖并构建。</li>
+              <li>安装内置 PostgreSQL 启动器。</li>
+              <li>执行 <code>npm start</code>，访问 <code>http://localhost:3000</code>。</li>
+            </ol>
+            <div class="code-wrap">
+              <pre class="code" id="npm-code"><code>git clone https://github.com/haikuotianko/free-welfare.git
+cd free-welfare
+npm ci
+npm run npm:build
+npm install --prefix deploy/native
+npm start</code></pre>
+              <button type="button" class="copy-btn" data-copy-target="npm-code">复制</button>
+            </div>
+            <div class="method-actions">
+              <a class="button primary sm" href="https://github.com/haikuotianko/free-welfare/blob/main/docs/26-deployment.md#8-npm-手动安装">npm 部署文档</a>
+              <a class="link" href="https://github.com/haikuotianko/free-welfare">源码</a>
+            </div>
+            <details class="method-notes">
+              <summary>外部 PostgreSQL 和常见错误</summary>
+              <p>在 <code>.env</code> 设置 <code>EMBEDDED_PG=false</code> 和 <code>DATABASE_URL</code> 即可连接外部数据库。Windows 上如果 Prisma 报 <code>EPERM</code>，先停止 API/Worker 再重新构建。</p>
+            </details>
+          </article>
+        </div>
+
+        <div class="subhead-row">
+          <h3>方式对比</h3>
+          <span>按系统、依赖和数据库选择</span>
+        </div>
+        <div class="table-wrap">
+          <table class="compare-table">
+            <thead>
+              <tr><th>方式</th><th>系统</th><th>需要</th><th>数据库</th><th>适合</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><a href="#windows">Windows 安装包</a></td><td>Windows 10/11</td><td>首次联网</td><td>内置</td><td>最省事</td></tr>
+              <tr><td><a href="#macos">macOS 脚本</a></td><td>macOS Intel/ARM</td><td>Node.js 22+</td><td>内置</td><td>Mac 桌面</td></tr>
+              <tr><td><a href="#linux">Linux / systemd</a></td><td>Linux</td><td>Node.js 22+</td><td>内置</td><td>单机 Linux</td></tr>
+              <tr><td><a href="#docker">Docker Compose</a></td><td>全平台 / 服务器</td><td>Docker</td><td>容器</td><td>推荐、可迁移</td></tr>
+              <tr><td><a href="#nas">NAS Compose</a></td><td>群晖/威联通/TrueNAS</td><td>Docker</td><td>容器</td><td>7×24 常驻</td></tr>
+              <tr><td><a href="#npm">npm 手动</a></td><td>全平台</td><td>Node.js 22+ / npm</td><td>内置或外部</td><td>自定义/二次开发</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="download-notes">
+          <div class="note-card"><h4>首次启动为什么慢？</h4><p>原生方式首次会下载 npm 依赖和 PostgreSQL 二进制；Docker 首次会拉取镜像。之后启动会快很多。</p></div>
+          <div class="note-card"><h4>需要单独安装 YYB 吗？</h4><p>需要。平台不内置 YYB-Go-Enhanced；启动后在设置页填写 YYB 地址和 token。</p></div>
+          <div class="note-card"><h4>数据在哪里？</h4><p>Docker 使用 <code>pgdata</code> 卷和 <code>data/</code>；原生使用 <code>data/postgres</code> 和 <code>data/</code>。升级前先备份。</p></div>
+          <div class="note-card"><h4>Windows 提示未知发布者</h4><p>安装包未签名，选择“仍要运行”即可；介意的话用 Docker 或源码方式。</p></div>
         </div>
       </section>
 
@@ -204,5 +494,6 @@ docker compose -f deploy/compose/docker-compose.yml up -d --build</code></pre>
         <span>© 2026 · MIT</span>
       </div>
     </footer>
+    <script src="./download.js" defer></script>
   </body>
 </html>
