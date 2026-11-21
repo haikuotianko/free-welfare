@@ -76,7 +76,7 @@ NAS 上建议用不依赖仓库相对路径的 `deploy/compose/docker-compose.na
    - `APP_URL=http://NAS地址:3000`
 4. 启动项目，访问 `http://NAS地址:3000/`。
 
-NAS  compose 使用命名卷 `fw-pgdata`、`fw-data`，不依赖 `../../data` 路径；如果要备份，映射到 NAS 共享目录也可以，把 `volumes` 改成 `/volume1/docker/free-welfare/data:/data`。
+NAS compose 使用命名卷 `fw-pgdata`、`fw-data`，不依赖 `../../data` 路径；如果要备份，映射到 NAS 共享目录也可以，把 `volumes` 改成 `/volume1/docker/free-welfare/data:/data`。
 
 > ARM64 群晖/威联通会直接拉取 arm64 镜像；如果拉取失败，先在 GitHub Actions 看 Docker workflow 是否成功。
 

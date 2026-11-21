@@ -52,3 +52,7 @@ powershell -ExecutionPolicy Bypass -File deploy\windows\build-installer.ps1
 生成的安装包安装到 `%LOCALAPPDATA%\Free Welfare`，不需要管理员权限；开始菜单和桌面会创建快捷方式。首次启动会联网安装依赖并构建，之后启动会直接运行。
 
 > 安装包未签名，Windows SmartScreen 可能提示“未知发布者”，选择“仍要运行”即可。
+
+## 卸载
+
+关闭 Free Welfare 控制台窗口，删除 `%LOCALAPPDATA%\Free Welfare`，再删除桌面和开始菜单的 `Free Welfare` 快捷方式。需要保留账号/脚本时，先备份安装目录下的 `data/` 和 `.env`。
