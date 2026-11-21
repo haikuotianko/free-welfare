@@ -45,10 +45,11 @@ NAS 请使用 [`docker-compose.nas.yml`](docker-compose.nas.yml)，它不依赖�
 ```ini
 CADDY_HTTP_PORT=80
 CADDY_HTTPS_PORT=443
+API_HOST_PORT=3000
 APP_PORT=3000
 ```
 
-NAS 上 80/443 常被系统占用，可改成 `8080` / `8443`。
+NAS 上 80/443 常被系统占用，可改成 `8080` / `8443`。`APP_PORT` 是容器内端口，一般不改；`API_HOST_PORT` 是宿主机端口。
 
 ## 数据与备份
 
