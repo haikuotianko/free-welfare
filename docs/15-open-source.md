@@ -14,8 +14,8 @@
 
 | 仓库 | 内容 | 发布 |
 | --- | --- | --- |
-| `free-welfare` | 平台代码、文档、分析目录 | Docker 镜像/Release |
-| `free-welfare-scripts` | 官方脚本、manifest、index | 脚本版本/index |
+| [`free-welfare`](https://github.com/haikuotianko/free-welfare) | 平台代码、文档、分析目录 | Docker 镜像/Release |
+| [`free-welfare-scripts`](https://github.com/haikuotianko/free-welfare-scripts) | 官方脚本、manifest、index | 脚本版本/index |
 | 用户自己的 fork | 自定义脚本/部署 | 自行维护 |
 
 建议脚本独立仓库，原因：

@@ -37,7 +37,7 @@ free-welfare/
 └── README.md
 ```
 
-> 建议脚本放在独立仓库 `free-welfare-scripts`；如果早期想省事，可以先放本仓库 `scripts/`，后续拆出。
+> 脚本放在独立仓库 [`free-welfare-scripts`](https://github.com/haikuotianko/free-welfare-scripts)；如果早期想省事，可以先放本仓库 `scripts/`，后续拆出。
 
 ## 2. 包依赖方向
 

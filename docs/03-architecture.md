@@ -135,7 +135,7 @@ GitHub 脚本仓库
 
 ### 5.1 脚本仓库结构
 
-建议脚本放在**独立仓库** `free-welfare-scripts`，这样平台和脚本可以各自发布、各自 CI；如果早期想省事，也可以先放在本仓库 `scripts/` 下，后续再拆。
+脚本放在**独立仓库** [`free-welfare-scripts`](https://github.com/haikuotianko/free-welfare-scripts)，这样平台和脚本可以各自发布、各自 CI；如果早期想省事，也可以先放在本仓库 `scripts/` 下，后续再拆。
 
 ```text
 free-welfare-scripts/

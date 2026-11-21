@@ -4,7 +4,7 @@
 
 ### Added
 
-- 修复 `deploy/compose/docker-compose.dev.yml` 与基础 compose 同时映射 5432 导致 PostgreSQL 启动失败的端口冲突，改用 `!override` 覆盖基础端口配置。
+- 初始化 GitHub 仓库与官网：主仓库 `free-welfare` 包含平台代码、文档和官网静态页，脚本仓库 `free-welfare-scripts` 包含 104 个应用脚本及 `index.json`/`bundles`；官网通过 GitHub Pages 发布在 <https://haikuotianko.github.io/free-welfare/>，截图中的账号名称、ID 和手机号已脱敏。
 - 账号页签到记录长文本改为桌面单行省略、手机两行截断，应用操作按钮固定在右侧，不再被长错误信息挤到下一行；完整内容仍可悬停查看或点状态标签打开运行日志。
 - 新增「YYB 请求」页和菜单：记录 API/Worker 对 YYB 的全部请求（取码、手机号授权、小程序数据、刷新账号、同步账号、扫码创建/查询/确认、健康检查、账号列表），支持按类型、成功/失败、微信账号、应用过滤和分页；账号和应用改为文本搜索，支持输入名称或 ID（带建议和 300ms 防抖）。
 - 总览队列改为每 3 秒单独刷新，不受 5 分钟缓存影响；新增今日 YYB 请求总数和成功/失败统计卡片。

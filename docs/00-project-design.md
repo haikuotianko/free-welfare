@@ -291,7 +291,7 @@ Caddy (80/443)
 ### 11.1 仓库
 
 - 主仓库：平台代码 + 文档 + 分析目录。
-- 脚本仓库：`free-welfare-scripts`（建议独立），提供 index/manifest/bundle。
+- 脚本仓库：[`free-welfare-scripts`](https://github.com/haikuotianko/free-welfare-scripts)，提供 index/manifest/bundle。
 - 分析目录：`analysis/`，只放文档/模板，不放解包代码/HAR。
 
 ### 11.2 结构与封装

@@ -77,7 +77,7 @@
 
 - [ ] `script_sources` + `index.json` 同步。
 - [ ] manifest 校验、bundle/hash、版本/回滚。
-- [ ] 官方脚本仓库 `free-welfare-scripts` + CI + index 生成。
+- [x] 官方脚本仓库 [`free-welfare-scripts`](https://github.com/haikuotianko/free-welfare-scripts) + CI + index 生成。
 - [ ] 三福商品：`listPointExchangeCoupon(New)`、详情、字段归一化。
 - [ ] 三福活动：勋章/任务/自动化只读。
 - [ ] 积分页：余额、即将过期、截止日期、规则。
