@@ -7,12 +7,13 @@
     "node": ">=22"
   },
   "scripts": {
-    "predev": "pnpm db:generate && pnpm --filter @free-welfare/shared --filter @free-welfare/domain --filter @free-welfare/db --filter @free-welfare/sdk build",
+    "predev": "pnpm db:generate && pnpm build:packages",
     "dev": "pnpm -r --parallel --if-present dev",
     "dev:api": "pnpm --filter @free-welfare/api dev",
     "dev:web": "pnpm --filter @free-welfare/web dev",
     "dev:worker": "pnpm --filter @free-welfare/worker dev",
     "build": "pnpm -r --if-present build",
+    "build:packages": "pnpm --filter @free-welfare/shared --filter @free-welfare/domain --filter @free-welfare/db --filter @free-welfare/sdk build",
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test",
     "lint": "echo \"lint preset comes with the first feature PR\"",
