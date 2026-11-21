@@ -7,7 +7,6 @@ RUN pnpm db:generate
 RUN pnpm build
 
 FROM node:22-bookworm-slim
-RUN corepack enable
 WORKDIR /app
 COPY --from=build /app /app
 ENV NODE_ENV=production

@@ -67,7 +67,7 @@ NestJS Worker ── Node worker_threads + vm ── 脚本 SDK ── 平台 HT
 | 安全 | 密钥加密；日志脱敏；HTTPS；最小权限；SSRF 拦截；脚本审核 |
 | 可靠性 | 任务幂等；失败重试分类；Worker 崩溃可回收；数据库备份 |
 | 性能 | 本地 API p95 < 300ms；普通任务调度误差 < 5s；抢购后续单独设计 |
-| 可移植 | Docker Compose；ARM64/amd64；PostgreSQL 16 |
+| 可移植 | Docker Compose / GHCR 镜像 / Windows 安装包；ARM64/amd64；PostgreSQL 16 |
 | 可维护 | TypeScript strict；模块边界；ADR；测试；CI |
 | 可观测 | 结构化日志；运行记录；健康检查；审计 |
 | 可用性 | PC 优先；手机友好；44px 触控；深浅色 |
@@ -95,7 +95,7 @@ NestJS Worker ── Node worker_threads + vm ── 脚本 SDK ── 平台 HT
 | 队列 | pg-boss |
 | Worker | NestJS standalone + Node 22 `worker_threads` + `vm` |
 | 脚本构建 | esbuild（应用公共模块打包；第三方依赖 external） |
-| 部署 | Docker Compose + Caddy；ARM64/amd64 |
+| 部署 | Docker Compose + Caddy；Windows/macOS/Linux 原生启动器；ARM64/amd64 |
 | 通知 | Server酱（首期） |
 
 ### 3.2 组件
@@ -110,7 +110,7 @@ packages/db     Prisma schema/client/repositories
 packages/sdk    脚本 SDK（ctx 类型、defineAdapter、helper）
 analysis/       小程序解包/接口/积分/加密/根 URL 文档
 docs/           设计/实现/开源文档
-deploy/         Docker/Caddy/Compose
+deploy/         Docker/Caddy/Compose/Windows/macOS/Linux/native
 ```
 
 ### 3.3 关键边界

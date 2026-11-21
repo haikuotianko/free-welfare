@@ -21,7 +21,7 @@
 | 脚本编译 | **esbuild** | TS/JS -> 单文件 bundle，注入 SDK |
 | 脚本运行时 | **Node.js 22 `worker_threads` + `vm`** | 资源限制、超时、上下文隔离；仅运行可信脚本 |
 | 反向代理 | **Caddy 2** | 自动 HTTPS；ARM64 支持 |
-| 部署 | **Docker Compose** | ARM64/amd64；NAS/服务器 |
+| 部署 | **Docker Compose / GHCR 镜像 / 原生启动器** | Windows/macOS/Linux/NAS；原生内置 PostgreSQL |
 | 通知 | **Server酱**（首期） | 后续 PushPlus/企业微信/Telegram |
 
 ### 2.1 为什么用 NestJS

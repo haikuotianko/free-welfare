@@ -1,0 +1,50 @@
+# NAS 专用 Compose：不依赖仓库相对路径，镜像从 GHCR 拉取。
+# 用法：把本文件和 .env 放在同一目录，在 Synology/QNAP/Portainer 里作为项目启动。
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-welfare}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-welfare}
+      POSTGRES_DB: ${POSTGRES_DB:-welfare}
+    volumes:
+      - fw-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-welfare} -d ${POSTGRES_DB:-welfare}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    image: ${FW_IMAGE:-ghcr.io/haikuotianko/free-welfare:latest}
+    restart: unless-stopped
+    env_file: .env
+    command: sh -c "node tools/migrate.mjs && node apps/api/dist/main.js"
+    ports:
+      - '${APP_PORT:-3000}:3000'
+    volumes:
+      - fw-data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'node -e "fetch(\"http://127.0.0.1:3000/api/v1/health\").then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  worker:
+    image: ${FW_IMAGE:-ghcr.io/haikuotianko/free-welfare:latest}
+    restart: unless-stopped
+    env_file: .env
+    command: node apps/worker/dist/main.js
+    volumes:
+      - fw-data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  fw-pgdata:
+  fw-data:

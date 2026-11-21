@@ -3,6 +3,7 @@ node_modules/
 dist/
 build/
 coverage/
+release/
 
 # 环境与密钥
 .env

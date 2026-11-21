@@ -1,0 +1,16 @@
+{
+  "name": "@free-welfare/native",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Free Welfare 原生启动器：内置 PostgreSQL，供 Windows/macOS/Linux 直接运行",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node launcher.mjs"
+  },
+  "dependencies": {
+    "embedded-postgres": "^18.7.0-beta.19"
+  }
+}

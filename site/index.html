@@ -107,7 +107,7 @@
           <article class="feature">
             <div class="icon">06</div>
             <h3>数据在自己手里</h3>
-            <p>PostgreSQL、脚本和缓存全部保存在本机；Docker Compose 部署，不依赖第三方托管。</p>
+            <p>PostgreSQL、脚本和缓存全部保存在本机；Docker、Windows 安装包、macOS/Linux 和 NAS 都能部署，不依赖第三方托管。</p>
           </article>
         </div>
       </section>
@@ -142,13 +142,14 @@
         <div class="start-card">
           <div class="start-copy">
             <p class="eyebrow"><span class="dot"></span> 快速开始</p>
-            <h2>三条命令，跑起来。</h2>
+            <h2>选一种方式，跑起来。</h2>
             <p>
-              需要 Node.js 22+、pnpm 和 Docker。首次启动先执行数据库迁移；
-              详细配置（YYB、通知、加密密钥）见 README。
+              Docker Compose、Windows 安装包、macOS/Linux 脚本和 NAS 镜像；
+              原生方式自带 PostgreSQL，不需要单独安装数据库。YYB 仍需单独部署。
             </p>
             <div class="start-links">
-              <a class="button primary" href="https://github.com/haikuotianko/free-welfare#开发phase-0-目标" target="_blank" rel="noreferrer">查看部署文档</a>
+              <a class="button primary" href="https://github.com/haikuotianko/free-welfare/blob/main/docs/26-deployment.md" target="_blank" rel="noreferrer">部署文档</a>
+              <a class="button ghost" href="https://github.com/haikuotianko/free-welfare/releases" target="_blank" rel="noreferrer">Windows 安装包</a>
               <a class="button ghost" href="https://github.com/haikuotianko/free-welfare-scripts" target="_blank" rel="noreferrer">脚本仓库</a>
             </div>
           </div>
@@ -156,14 +157,11 @@
 git clone https://github.com/haikuotianko/free-welfare.git
 cd free-welfare
 
-<span class="c"># 2. 安装依赖</span>
-pnpm install
+<span class="c"># 2. 配置（至少填加密密钥、数据库密码、YYB）</span>
+cp deploy/compose/.env.example deploy/compose/.env
 
-<span class="c"># 3. 启动 PostgreSQL 和开发服务</span>
-docker compose -f deploy/compose/docker-compose.yml \
-  -f deploy/compose/docker-compose.dev.yml up -d postgres
-pnpm db:migrate
-pnpm dev</code></pre>
+<span class="c"># 3. 启动（含 PostgreSQL、API、Worker、Caddy）</span>
+docker compose -f deploy/compose/docker-compose.yml up -d</code></pre>
         </div>
       </section>
 

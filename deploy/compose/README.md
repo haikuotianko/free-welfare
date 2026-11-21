@@ -1,49 +1,72 @@
-# Docker Compose 部署（计划）
+# Docker Compose 部署
 
-Phase 0 目标服务：
+## 服务
 
 | 服务 | 说明 |
 | --- | --- |
-| `caddy` | 反向代理/HTTPS；只暴露 80/443 |
+| `caddy` | 反向代理，对外 80/443（可改端口） |
 | `api` | NestJS API + 静态前端 |
-| `worker` | 调度 + 脚本执行 |
-| `postgres` | PostgreSQL 16；持久化卷 |
-| `yyb-go` | 可选；也可用外部 YYB |
+| `worker` | 定时队列 + 脚本执行 |
+| `postgres` | PostgreSQL 16，持久化卷 |
+| `yyb-go` | 可选，也可以连接外部 YYB |
 
-## 网络
-
-- 创建内部网络 `welfare_internal`。
-- `api`/`worker`/`postgres`/`yyb-go` 互通。
-- 只有 `caddy` 映射宿主端口。
-- YYB 不暴露公网。
-
-## 卷
-
-- `pgdata`
-- `./data/scripts`
-- `./data/logs`
-- `./data/artifacts`
-- `./data/uploads`
-
-## 环境
-
-复制 `.env.example` 为 `.env`，至少填：
-
-- `APP_ENCRYPTION_KEY`
-- `AUTH_SESSION_SECRET`
-- `POSTGRES_PASSWORD` / `DATABASE_URL`
-- `YYB_BASE_URL` / `YYB_INTEGRATION_TOKEN` / `YYB_PROTOCOL_TOKEN`
-- `SCRIPT_SOURCE_URL`
-- `SERVERCHAN_TOKEN`（可选）
-- `CADDY_DOMAIN`
-
-## 启动（脚手架完成后）
+## 快速启动
 
 ```bash
-docker compose -f deploy/compose/docker-compose.yml up -d
+cp deploy/compose/.env.example deploy/compose/.env
+# 编辑 .env：加密密钥、数据库密码、YYB 地址/token、APP_URL
+docker compose -f deploy/compose/docker-compose.yml up -d --build
 ```
 
-## 备份
+- 首次启动/升级会自动执行 `prisma migrate deploy`。
+- 数据目录：仓库根目录 `data/`。
+- 数据库卷：`pgdata`。
+- 只暴露 Caddy 的 80/443；API 的 3000 端口也直接映射，方便调试。
 
-- `pg_dump` + `data/`。
-- 升级前备份；镜像回滚不等于数据库回滚。
+## 使用预构建镜像（NAS / 服务器）
+
+镜像由 GitHub Actions 构建并推送到：
+
+```text
+ghcr.io/haikuotianko/free-welfare:latest
+```
+
+```bash
+docker compose -f deploy/compose/docker-compose.yml pull
+docker compose -f deploy/compose/docker-compose.yml up -d --no-build
+```
+
+NAS 请使用 [`docker-compose.nas.yml`](docker-compose.nas.yml)，它不依赖仓库相对路径，使用命名卷，具体步骤见 [26 部署方式](../../docs/26-deployment.md#3-docker-预构建镜像--nas)。
+
+## 端口
+
+在 `.env` 中修改：
+
+```ini
+CADDY_HTTP_PORT=80
+CADDY_HTTPS_PORT=443
+APP_PORT=3000
+```
+
+NAS 上 80/443 常被系统占用，可改成 `8080` / `8443`。
+
+## 数据与备份
+
+- `pgdata`：PostgreSQL
+- `./data/scripts`、`./data/logs`、`./data/artifacts`、`./data/uploads`
+- `.env`
+
+备份：
+
+```bash
+docker exec -t <postgres容器> pg_dump -U welfare welfare > backup.sql
+```
+
+升级：
+
+```bash
+git pull
+docker compose -f deploy/compose/docker-compose.yml up -d --build
+```
+
+更多方式见 [26 部署方式](../../docs/26-deployment.md)。

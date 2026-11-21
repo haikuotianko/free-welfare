@@ -26,6 +26,20 @@
 - **可观测**：运行记录、日志、错误码、活动/兑换/通知记录、Server酱通知。
 - **开源**：MIT；贡献指南、安全策略、ADR、脚本审核流程。
 
+## 部署方式
+
+| 方式 | 适合 | 入口 |
+| --- | --- | --- |
+| Docker Compose | Windows / macOS / Linux / NAS，推荐 | [部署文档](docs/26-deployment.md#2-docker-compose推荐) |
+| Docker 预构建镜像 | NAS、ARM64、服务器 | [NAS / 镜像](docs/26-deployment.md#3-docker-预构建镜像--nas) |
+| Windows 安装包 | 不想装 Docker / Node 的 Windows 用户 | [Releases](https://github.com/haikuotianko/free-welfare/releases) · [说明](deploy/windows/README.md) |
+| Windows 脚本 | 已有 Node 的 Windows 用户 | [deploy/windows](deploy/windows/README.md) |
+| macOS 双击启动 | Mac 用户 | [deploy/macos](deploy/macos/README.md) |
+| Linux systemd | 单机 Linux | [deploy/linux](deploy/linux/README.md) |
+| npm 手动安装 | 想自己控制依赖/反向代理 | [npm 安装](docs/26-deployment.md#8-npm-手动安装) |
+
+> 所有原生方式都自带内置 PostgreSQL，不需要单独安装数据库；YYB 仍需单独部署。完整说明见 [26 部署方式](docs/26-deployment.md)。
+
 ## 技术栈
 
 | 层 | 选型 |
@@ -35,7 +49,7 @@
 | 队列/调度 | PostgreSQL 轮询 + 应用脚本 cron（pg-boss 预留） |
 | Worker | NestJS standalone + Node 22 `worker_threads` + `vm` |
 | 脚本构建 | esbuild；官方源可依赖，custom 禁用 dependencies/require |
-| 部署 | Docker Compose + Caddy；ARM64/amd64 |
+| 部署 | Docker Compose + Caddy；Windows/macOS/Linux 原生启动器 |
 | 通知 | Server酱（首期） |
 
 ## 项目结构
@@ -53,7 +67,7 @@ packages/
 analysis/     小程序解包/接口/积分/加密/根 URL
 docs/         设计/实现/开源文档
 site/         官网静态页（GitHub Pages）
-deploy/       Docker/Compose/Caddy
+deploy/       Docker/Compose/Caddy/Windows/macOS/Linux/native
 ```
 
 详细边界见 [13 项目结构与封装](docs/13-project-structure.md)。
@@ -87,6 +101,7 @@ deploy/       Docker/Compose/Caddy
 | [22 应用商店与应用源](docs/22-app-store.md) | 应用源格式、应用包、下载/更新、本机源 |
 | [23 平台时间与下个任务倒计时](docs/23-platform-clock.md) | 本地时间、自动/手动校时、下次运行倒计时 |
 | [24 账号表单与活动资料](docs/24-account-forms.md) | 表单模板、账号真实数据、活动资料 |
+| [26 部署方式](docs/26-deployment.md) | Docker、Windows、macOS、NAS、npm、systemd |
 | [文档索引](docs/README.md) | 全部文档入口 |
 | [小程序分析](analysis/README.md) | 解包工具、分析包模板、案例文档 |
 | [官网源码](site/index.html) | GitHub Pages 静态官网 |
@@ -115,6 +130,8 @@ pnpm dev
 ```
 
 > 开发环境默认连接本机 PostgreSQL；首次运行前先执行迁移。
+>
+> 没有 pnpm 也可以用 npm 部署：`npm ci && npm run npm:build && npm install --prefix deploy/native && npm start`，详见 [26 部署方式](docs/26-deployment.md#8-npm-手动安装)。
 
 ## 边界
 

@@ -9,10 +9,10 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@free-welfare/db": "workspace:*",
-    "@free-welfare/domain": "workspace:*",
-    "@free-welfare/sdk": "workspace:*",
-    "@free-welfare/shared": "workspace:*",
+    "@free-welfare/db": "file:../../packages/db",
+    "@free-welfare/domain": "file:../../packages/domain",
+    "@free-welfare/sdk": "file:../../packages/sdk",
+    "@free-welfare/shared": "file:../../packages/shared",
     "@nestjs/common": "^11.0.5",
     "@nestjs/core": "^11.0.5",
     "dotenv": "^16.4.7",

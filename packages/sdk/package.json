@@ -10,7 +10,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@free-welfare/shared": "workspace:*"
+    "@free-welfare/shared": "file:../shared"
   },
   "devDependencies": {
     "typescript": "^5.7.2",

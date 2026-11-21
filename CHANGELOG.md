@@ -4,6 +4,9 @@
 
 ### Added
 
+- 新增多种部署方式：Docker Compose、GHCR 预构建镜像（amd64/arm64）、NAS 专用 Compose、Windows 安装包/脚本、macOS 双击启动、Linux systemd，以及 npm 手动安装；原生方式内置 PostgreSQL，不再要求单独安装数据库。安装包自带 Node.js 运行时，首次启动联网安装依赖并构建，输出在 `release/windows/Free-Welfare-Setup-<版本>.exe`。
+- 新增 `20261121100000_schema_drift` 迁移，补齐 `Run.notBefore`、`Site.registrationMode/registrationNote/runTimeoutMinutes`、`SiteAccount.disabled`、`WechatAccount.timeOffsetMinutes` 和缺失索引；修复全新数据库执行迁移后 Worker 报 `column Run.notBefore does not exist` 的问题。
+
 - 初始化 GitHub 仓库与官网：主仓库 `free-welfare` 包含平台代码、文档和官网静态页，脚本仓库 `free-welfare-scripts` 包含 104 个应用脚本及 `index.json`/`bundles`；官网通过 GitHub Pages 发布在 <https://haikuotianko.github.io/free-welfare/>，截图中的账号名称、ID 和手机号已脱敏。
 - 账号页签到记录长文本改为桌面单行省略、手机两行截断，应用操作按钮固定在右侧，不再被长错误信息挤到下一行；完整内容仍可悬停查看或点状态标签打开运行日志。
 - 新增「YYB 请求」页和菜单：记录 API/Worker 对 YYB 的全部请求（取码、手机号授权、小程序数据、刷新账号、同步账号、扫码创建/查询/确认、健康检查、账号列表），支持按类型、成功/失败、微信账号、应用过滤和分页；账号和应用改为文本搜索，支持输入名称或 ID（带建议和 300ms 防抖）。

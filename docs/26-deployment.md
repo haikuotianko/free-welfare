@@ -1,0 +1,191 @@
+# 部署方式
+
+Free Welfare 支持 Docker、Windows 安装包、macOS/Linux 直接运行和 NAS。下面按使用场景选择。
+
+## 1. 怎么选
+
+| 方式 | 适合 | 需要 | 数据库 |
+| --- | --- | --- | --- |
+| Docker Compose（源码构建） | 有 Docker 的 Windows/macOS/Linux | Docker Desktop / Docker Engine | 容器 PostgreSQL |
+| Docker 预构建镜像 | NAS、ARM64、服务器 | Docker，能拉取 GHCR | 容器 PostgreSQL |
+| Windows 安装包 | 不想装 Docker/Node 的 Windows 用户 | 无；首次运行联网 | 内置 PostgreSQL |
+| Windows 脚本 | 已装 Node 的 Windows 用户 | Node.js 22+ | 内置 PostgreSQL |
+| macOS 双击启动 | Mac 用户 | Node.js 22+ | 内置 PostgreSQL |
+| Linux systemd | 单机 Linux | Node.js 22+ | 内置 PostgreSQL |
+| npm 手动安装 | 想自己控制依赖/反向代理 | Node.js 22+ / npm | 内置或外部 PostgreSQL |
+
+> 所有方式都需要一个可用的 YYB-Go-Enhanced 实例；平台不内置 YYB。YYB 可以跑在同一台机器或局域网另一台机器。
+
+## 2. Docker Compose（推荐）
+
+```bash
+cp deploy/compose/.env.example deploy/compose/.env
+# 编辑 .env：APP_ENCRYPTION_KEY、AUTH_SESSION_SECRET、POSTGRES_PASSWORD、
+# DATABASE_URL、YYB_BASE_URL、YYB_INTEGRATION_TOKEN、APP_URL
+docker compose -f deploy/compose/docker-compose.yml up -d --build
+```
+
+- 入口：Caddy `http://服务器IP/`，API 也直接暴露在 `3000`。
+- 数据：仓库根目录 `data/`；数据库卷 `pgdata`。
+- `api` 容器启动时会自动执行 `prisma migrate deploy`。
+- 修改 `CADDY_HTTP_PORT` / `CADDY_HTTPS_PORT` 可避开 NAS 上被占用的 80/443。
+
+### 升级
+
+```bash
+git pull
+docker compose -f deploy/compose/docker-compose.yml up -d --build
+```
+
+## 3. Docker 预构建镜像 / NAS
+
+GitHub Actions 会构建 `linux/amd64` + `linux/arm64` 镜像：
+
+```text
+ghcr.io/haikuotianko/free-welfare:latest
+```
+
+如果镜像包是私有的，先在 NAS/服务器上登录：
+
+```bash
+echo <GitHub PAT> | docker login ghcr.io -u <GitHub 用户名> --password-stdin
+```
+
+或到 GitHub 的 Package 设置里把镜像改为 public。
+
+### 通用服务器 / Portainer
+
+```bash
+cp deploy/compose/.env.example deploy/compose/.env
+# 编辑 .env
+docker compose -f deploy/compose/docker-compose.yml pull
+docker compose -f deploy/compose/docker-compose.yml up -d --no-build
+```
+
+### Synology / QNAP / TrueNAS
+
+NAS 上建议用不依赖仓库相对路径的 `deploy/compose/docker-compose.nas.yml`：
+
+1. 在 NAS 的 Docker/Container Manager 里新建项目，目录例如 `/volume1/docker/free-welfare`。
+2. 把 `docker-compose.nas.yml` 内容粘贴到项目编辑器，把 `.env` 放在同一目录。
+3. 修改 `.env`：
+   - `APP_PORT=3000`（或 NAS 上空闲端口）
+   - `POSTGRES_PASSWORD` / `DATABASE_URL`
+   - `APP_ENCRYPTION_KEY` / `AUTH_SESSION_SECRET`
+   - `YYB_BASE_URL=http://你的YYB地址:8000`
+   - `APP_URL=http://NAS地址:3000`
+4. 启动项目，访问 `http://NAS地址:3000/`。
+
+NAS  compose 使用命名卷 `fw-pgdata`、`fw-data`，不依赖 `../../data` 路径；如果要备份，映射到 NAS 共享目录也可以，把 `volumes` 改成 `/volume1/docker/free-welfare/data:/data`。
+
+> ARM64 群晖/威联通会直接拉取 arm64 镜像；如果拉取失败，先在 GitHub Actions 看 Docker workflow 是否成功。
+
+## 4. Windows 安装包
+
+从 [Releases](https://github.com/haikuotianko/free-welfare/releases) 下载 `Free-Welfare-Setup-<版本>.exe`。
+
+- 安装到 `%LOCALAPPDATA%\Free Welfare`，不需要管理员权限。
+- 自带 Node.js 运行时；首次启动会联网 `npm ci`、构建并安装内置 PostgreSQL，需要几分钟。
+- 自动创建开始菜单和桌面快捷方式，启动后打开 <http://localhost:3000>。
+- 数据在安装目录的 `data/`；升级安装不会删除 `.env` 和 `data/`。
+- 未签名，SmartScreen 提示时选择“仍要运行”。
+
+自己构建安装包：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File deploy\windows\build-installer.ps1
+```
+
+输出在 `release\windows\Free-Welfare-Setup-<版本>.exe`。
+
+## 5. Windows 脚本（已有 Node）
+
+```powershell
+powershell -ExecutionPolicy Bypass -File deploy\windows\start.ps1
+```
+
+首次运行会自动安装依赖、构建、安装内置 PostgreSQL，然后启动。详见 [deploy/windows/README.md](../deploy/windows/README.md)。
+
+## 6. macOS
+
+```bash
+chmod +x deploy/macos/start.command
+./deploy/macos/start.command
+```
+
+也可以直接双击 `deploy/macos/start.command`。首次运行需要联网安装依赖。详见 [deploy/macos/README.md](../deploy/macos/README.md)。
+
+## 7. Linux / systemd
+
+```bash
+chmod +x deploy/linux/start.sh
+./deploy/linux/start.sh
+```
+
+长期运行：
+
+```bash
+sudo useradd --system --user-group --home /opt/free-welfare --shell /usr/sbin/nologin freewelfare
+sudo chown -R freewelfare:freewelfare /opt/free-welfare
+sudo cp deploy/linux/free-welfare.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now free-welfare
+```
+
+详见 [deploy/linux/README.md](../deploy/linux/README.md)。
+
+## 8. npm 手动安装
+
+仓库同时支持 `pnpm` 和 `npm`。全新克隆后可以直接用 npm：
+
+```bash
+npm ci
+npm run npm:build
+npm install --prefix deploy/native
+npm start
+```
+
+`npm start` 会启动内置 PostgreSQL、执行迁移、启动 API + Worker，并打开浏览器。
+
+如果使用外部 PostgreSQL，先在 `.env` 设置：
+
+```ini
+EMBEDDED_PG=false
+DATABASE_URL=postgresql://用户:密码@127.0.0.1:5432/welfare?schema=public
+```
+
+再执行 `npm start`。修改代码后重新执行 `npm run npm:build`。
+
+## 9. 数据与备份
+
+| 内容 | 位置 |
+| --- | --- |
+| 数据库（Docker） | `pgdata` 卷 |
+| 数据库（原生） | `data/postgres/` |
+| 脚本/上传/日志 | `data/` |
+| 配置 | 根目录 `.env` |
+
+Docker 备份：
+
+```bash
+docker exec -t <postgres容器> pg_dump -U welfare welfare > backup.sql
+docker run --rm -v free-welfare_pgdata:/data -v "$PWD":/backup alpine tar czf /backup/pgdata.tar.gz -C /data .
+```
+
+原生模式备份：
+
+```bash
+# Windows 的 pg_dump 在 deploy/native/node_modules/@embedded-postgres/windows-x64/native/bin/
+pg_dump "postgresql://welfare:密码@127.0.0.1:5433/welfare" > backup.sql
+```
+
+同时备份 `data/` 和 `.env`。
+
+## 10. 常见问题
+
+- **Windows `EPERM ... query_engine-windows.dll.node`**：先停止 API/Worker，再执行 `npm run npm:build`；Prisma 生成时会替换引擎文件。
+- **NAS 80/443 被占用**：设置 `CADDY_HTTP_PORT=8080`、`CADDY_HTTPS_PORT=8443`。
+- **GHCR 拉取 401/403**：镜像默认可能是私有，执行 `docker login ghcr.io` 或在 Package 设置里改为 public。
+- **首次启动很慢**：Windows 安装包/macOS/Linux 脚本首次会下载 npm 依赖和 PostgreSQL 二进制。
+- **Docker 启动失败 `job failed without details`**：Docker Desktop 的 Hyper-V 虚拟机内存不足；关闭一些程序或给 Docker 分配至少 2GB。
+- **YYB 不可用**：平台仍可启动，但取码/手机号授权/同步账号会失败；在设置页或 `.env` 配好 YYB 地址和 token。

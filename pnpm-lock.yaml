@@ -182,13 +182,13 @@ importers:
         specifier: ^8.1.0
         version: 8.3.0
       '@free-welfare/db':
-        specifier: workspace:*
+        specifier: file:../../packages/db
         version: link:../../packages/db
       '@free-welfare/domain':
-        specifier: workspace:*
+        specifier: file:../../packages/domain
         version: link:../../packages/domain
       '@free-welfare/shared':
-        specifier: workspace:*
+        specifier: file:../../packages/shared
         version: link:../../packages/shared
       '@nestjs/common':
         specifier: ^11.0.5
@@ -246,7 +246,7 @@ importers:
         specifier: ^6.43.15
         version: 6.43.15
       '@free-welfare/shared':
-        specifier: workspace:*
+        specifier: file:../../packages/shared
         version: link:../../packages/shared
       '@lezer/highlight':
         specifier: ^1.2.5
@@ -292,16 +292,16 @@ importers:
   apps/worker:
     dependencies:
       '@free-welfare/db':
-        specifier: workspace:*
+        specifier: file:../../packages/db
         version: link:../../packages/db
       '@free-welfare/domain':
-        specifier: workspace:*
+        specifier: file:../../packages/domain
         version: link:../../packages/domain
       '@free-welfare/sdk':
-        specifier: workspace:*
+        specifier: file:../../packages/sdk
         version: link:../../packages/sdk
       '@free-welfare/shared':
-        specifier: workspace:*
+        specifier: file:../../packages/shared
         version: link:../../packages/shared
       '@nestjs/common':
         specifier: ^11.0.5
@@ -345,7 +345,7 @@ importers:
   packages/domain:
     dependencies:
       '@free-welfare/shared':
-        specifier: workspace:*
+        specifier: file:../shared
         version: link:../shared
     devDependencies:
       typescript:
@@ -358,7 +358,7 @@ importers:
   packages/sdk:
     dependencies:
       '@free-welfare/shared':
-        specifier: workspace:*
+        specifier: file:../shared
         version: link:../shared
     devDependencies:
       typescript:

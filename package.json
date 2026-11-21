@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@12.9.1",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "engines": {
     "node": ">=22"
   },
@@ -23,7 +27,12 @@
     "db:studio": "pnpm --filter @free-welfare/db studio",
     "import:apps": "pnpm --filter @free-welfare/db exec node --env-file=../../.env ../../tools/import-apps.cjs",
     "build:app-source": "node tools/build-app-source.cjs",
-    "check:yyb": "node tools/check-yyb.mjs"
+    "check:yyb": "node tools/check-yyb.mjs",
+    "npm:generate": "npm run generate -w @free-welfare/db",
+    "npm:build:packages": "npm run build -w @free-welfare/shared && npm run build -w @free-welfare/domain && npm run build -w @free-welfare/db && npm run build -w @free-welfare/sdk",
+    "npm:build": "npm run npm:build:packages && npm run build -w @free-welfare/api && npm run build -w @free-welfare/worker && npm run build -w @free-welfare/web",
+    "npm:migrate": "npm run migrate -w @free-welfare/db",
+    "npm:start": "node deploy/native/launcher.mjs"
   },
   "devDependencies": {
     "typescript": "^5.7.2",
