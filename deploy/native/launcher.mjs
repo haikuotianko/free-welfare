@@ -203,6 +203,12 @@ async function shutdown(code = 0) {
 }
 
 async function main() {
+  const major = Number(process.versions.node.split('.')[0]);
+  if (!Number.isFinite(major) || major < 22) {
+    console.error(`需要 Node.js 22+，当前为 ${process.versions.node}`);
+    process.exit(1);
+  }
+
   if (!existsSync(nativeNodeModules)) {
     console.error(
       '缺少内置数据库依赖。请在项目根目录运行：\n' +
