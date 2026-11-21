@@ -1,0 +1,89 @@
+schema_version: 1
+key: example
+name: 示例小程序
+app_id: wx0000000000000000
+platform: wechat_miniprogram
+category: 会员/积分
+icon: assets/icon.svg
+status: draft              # draft | partial | verified
+updated_at: "2026-11-13"
+
+source:
+  package: ""              # wxapkg 文件名/来源
+  version: ""              # 小程序版本，如 420
+  obtained_at: ""
+  obtained_from: ""        # PC 微信缓存 / Android / 其他
+
+network:
+  mode: whitelist          # whitelist | unrestricted
+  root_urls:
+    - id: api
+      url: https://api.example.com
+      purpose: 业务接口
+      path_prefix: ""
+      used_by: [auth, sign_in, points]
+      required: true
+    - id: img
+      url: https://img.example.com
+      purpose: 图片/静态资源
+      path_prefix: ""
+      used_by: []
+      required: false
+  allowed_origins:
+    - https://api.example.com
+  notes: "脚本只允许 api；img 仅页面展示，不加入脚本白名单。"
+
+encryption:
+  transport: tls           # tls | unknown
+  request_signing: unknown # none | md5 | hmac | rsa | unknown
+  request_encryption: unknown
+  response_encryption: unknown
+  storage_encryption: unknown
+  certificate_pinning: unknown
+  notes: ""
+
+auth:
+  login_endpoint: ""
+  method: POST
+  code_field: code
+  session_field: sid
+  session_type: body       # body | header | cookie
+  session_expiry: unknown
+  refresh: unknown         # re-login-code | refresh-token | unknown
+  phone_binding: unknown   # required | optional | not-needed | unknown
+  notes: ""
+
+points:
+  currency: points
+  balance_endpoint: ""
+  history_endpoint: ""
+  rules_endpoint: ""
+  expiry_policy: unknown   # never | year_end | months:N | days:N | unknown
+  expiry_verified: false
+  notes: ""
+
+products:
+  list_endpoint: ""
+  detail_endpoint: ""
+  redeem_endpoint: ""
+  notes: ""
+
+activities:
+  list_endpoint: ""
+  claim_endpoint: ""
+  notes: ""
+
+scripts:
+  planned:
+    - login
+    - sign_in
+    - points
+  common:
+    - auth
+    - crypto
+  notes: ""
+
+risks:
+  - ""
+
+notes: ""

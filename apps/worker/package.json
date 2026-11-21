@@ -1,0 +1,27 @@
+{
+  "name": "@free-welfare/worker",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsc -p tsconfig.json && concurrently -k -s first \"tsc -p tsconfig.json --watch --preserveWatchOutput\" \"node --watch dist/main.js\"",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/main.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@free-welfare/db": "workspace:*",
+    "@free-welfare/domain": "workspace:*",
+    "@free-welfare/sdk": "workspace:*",
+    "@free-welfare/shared": "workspace:*",
+    "@nestjs/common": "^11.0.5",
+    "@nestjs/core": "^11.0.5",
+    "dotenv": "^16.4.7",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "concurrently": "^9.1.2",
+    "typescript": "^5.7.2"
+  }
+}

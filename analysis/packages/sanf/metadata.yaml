@@ -1,0 +1,128 @@
+schema_version: 1
+key: sanf
+name: 三福会员中心
+app_id: wxfe13a2a5df88b058
+platform: wechat_miniprogram
+category: 会员/福币/商城
+icon: assets/icon.svg
+status: partial
+updated_at: "2026-11-13"
+
+source:
+  package: "__APP__.wxapkg,_pages_couponcenter_.wxapkg,_pages_user_.wxapkg"
+  version: "420"
+  obtained_at: "2026-11-13"
+  obtained_from: "PC 微信缓存：C:/Users/<user>/AppData/Roaming/Tencent/xwechat/radium/users/<hash>/applet/packages/wxfe13a2a5df88b058/420"
+
+network:
+  mode: whitelist
+  root_urls:
+    - id: crm
+      url: https://crm.sanfu.com
+      purpose: 登录/签到/福币/商品/兑换
+      path_prefix: ""
+      used_by: [auth, sign_in, points, products, redeem, activities]
+      required: true
+    - id: m
+      url: https://m.sanfu.com
+      purpose: 服务器时间/H5 页面
+      path_prefix: ""
+      used_by: []
+      required: false
+    - id: img
+      url: https://img.sanfu.com
+      purpose: 图片/静态资源
+      path_prefix: ""
+      used_by: []
+      required: false
+    - id: tcrm
+      url: https://tcrm.sanfu.com
+      purpose: 会员卡/云平台（首期不用）
+      path_prefix: /ms-sanfu-cloud-platform-customer
+      used_by: []
+      required: false
+    - id: cashier
+      url: https://cashier.cloud.sanfu.com
+      purpose: 云支付/二维码（首期不用）
+      path_prefix: ""
+      used_by: []
+      required: false
+    - id: ab
+      url: https://ab.sanfu.com:26666
+      purpose: 开关/配置
+      path_prefix: ""
+      used_by: []
+      required: false
+    - id: track
+      url: https://track.sanfu.com
+      purpose: 埋点（脚本不需要）
+      path_prefix: ""
+      used_by: []
+      required: false
+  allowed_origins:
+    - https://crm.sanfu.com
+  notes: "脚本只允许 crm.sanfu.com；其他根 URL 仅记录，不加入脚本白名单。"
+
+encryption:
+  transport: tls
+  request_signing: none_observed
+  request_encryption: none_observed
+  response_encryption: none_observed
+  storage_encryption: none_observed
+  certificate_pinning: unknown
+  notes: "登录/签到/福币/商品接口走普通 JSON + Sf-Authorization: sid + cusId，未发现签名。utils/sf-req2.js 另有会员卡/云支付 MD5 签名链路，首期不需要；硬编码 key 不记录。"
+
+auth:
+  login_endpoint: "/ms-sanfu-wechat-customer-core/customer/core/wxMiniAppLogin"
+  method: POST
+  code_field: code
+  session_field: sid
+  session_type: header_and_body
+  session_expiry: "48h local cache; server may expire earlier"
+  refresh: re-login-code
+  phone_binding: "unknown / required for register"
+  notes: "成功 data 还含 curCusId、openid、sessionKey、unionid、qwShoId；后续 header Sf-Authorization: sid、cusId: curCusId；失败 code=40301 表示未登录。"
+
+points:
+  currency: fubi
+  balance_endpoint: "/ms-sanfu-wechat-customer/customer/getPoint"
+  history_endpoint: ""
+  rules_endpoint: "H5 user/fubi-rule; signRule"
+  expiry_policy: year_end
+  expiry_verified: true
+  notes: "getPoint 返回 restMoney（余额）、historyPoint（即将过期数量）、nextYear（有效期截止）；UI 文案“有效期截止至 {nextYear}24时”，年末过期。"
+
+products:
+  list_endpoint: "/ms-sanfu-wechat-coupon/coupon/listPointExchangeCoupon; /ms-sanfu-wechat-coupon/coupon/listPointExchangeCouponNew"
+  detail_endpoint: "/ms-sanfu-wechat-coupon/coupon/getPointExchangeCoupon"
+  redeem_endpoint: "/ms-sanfu-wechat-coupon/coupon/usePointExchangeCoupon"
+  notes: "外部权益：listExternalExchangeIndex/listExternalExchange/usePointExchange；字段 giftId/giftPrice/statusId/hourList 等；库存/限购字段待实测。"
+
+activities:
+  list_endpoint: "badge/listBadge, badge/listCustomerBadge, automation/getCombinationAutomationCfg, gift/getGift, donate/listDonateConfig, game/listGameForPop"
+  claim_endpoint: "badge/activateBadge, badge/receiveBadgeReward, automation/saveMarketingAutomationReceive, gift/receiveGift"
+  notes: "福币任务入口：签到、购买商品、点亮勋章、评价订单；先只读，确认幂等后再领取。"
+
+scripts:
+  planned:
+    - login
+    - sign_in
+    - points
+    - products
+    - redeem
+    - activities
+    - register
+  common:
+    - auth
+    - http
+    - crypto
+  notes: "一功能一脚本；auth 封装 ensureSession/login，sign_in/points/products/redeem 等导入。"
+
+risks:
+  - "nextYear 格式待真实响应确认"
+  - "商品库存/限购字段未确认"
+  - "兑换/领取写操作需幂等实测"
+  - "注册/手机号能否用 YYB 待验证"
+  - "接口版本/headers 可能变化"
+
+notes: "现有脚本：N:\\myProject\\qinglong-script\\mini-program\\sanf.js"

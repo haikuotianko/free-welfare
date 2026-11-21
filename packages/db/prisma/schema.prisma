@@ -1,0 +1,534 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id           String    @id @default(cuid())
+  username     String    @unique
+  passwordHash String
+  disabled     Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  sessions     Session[]
+  auditLogs    AuditLog[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  adminId   String
+  tokenHash String   @unique
+  expiresAt DateTime
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  admin     Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([expiresAt])
+}
+
+model WechatAccount {
+  id            String        @id @default(cuid())
+  yybRef        String        @unique
+  displayName   String
+  remark        String?
+  status        String        @default("unknown")
+  scanProduct   String?
+  openidMasked  String?
+  avatarUrl     String?
+  timeOffsetMinutes Int       @default(0)
+  lastSyncedAt  DateTime?
+  raw           Json?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  siteAccounts  SiteAccount[]
+  accountForms  AccountForm[]
+}
+
+model Site {
+  id             String        @id @default(cuid())
+  key            String        @unique
+  name           String
+  platform       String        @default("wechat_miniprogram")
+  appId          String
+  iconUrl        String?
+  description    String        @default("")
+  pointsName     String        @default("积分")
+  capabilities   String[]      @default([])
+  scriptMode     String        @default("platform")
+  runTimeoutMinutes Int?
+  registrationMode String      @default("unknown")
+  registrationNote String      @default("")
+  config         Json          @default("{}")
+  networkMode    String        @default("whitelist")
+  rootUrls       Json          @default("[]")
+  allowedOrigins String[]      @default([])
+  networkNotes   String        @default("")
+  status         String        @default("active")
+  metadata       Json?
+  sourceId       String?
+  sourceAppKey   String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  source         ScriptSource? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  siteAccounts   SiteAccount[]
+  products       Product[]
+  activities     Activity[]
+  bindings       Binding[]
+  scripts        SiteScript[]
+  envVars        SiteEnvVar[]
+  orders         Order[]
+  runs           Run[]
+
+  @@unique([platform, appId])
+  @@index([sourceId])
+}
+
+model SiteAccount {
+  id               String        @id @default(cuid())
+  siteId           String
+  wechatAccountId  String
+  businessUserId   String?
+  nickname         String?
+  sessionEnc       String?
+  sessionExpiresAt DateTime?
+  status           String        @default("active")
+  disabled         Boolean       @default(false)
+  envVars          Json          @default("{}")
+  lastLoginAt      DateTime?
+  lastError        String?
+  raw              Json?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  site             Site          @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  wechatAccount    WechatAccount @relation(fields: [wechatAccountId], references: [id], onDelete: Cascade)
+  pointAccount     PointAccount?
+  bindings         Binding[]
+  orders           Order[]
+  runs             Run[]
+
+  @@unique([siteId, wechatAccountId])
+  @@index([siteId])
+}
+
+model PointAccount {
+  id              String             @id @default(cuid())
+  siteAccountId   String             @unique
+  balance         Int                @default(0)
+  currency        String             @default("points")
+  expiringAmount  Int                @default(0)
+  nextExpiryAt    DateTime?
+  rulesText       String?
+  estimated       Boolean            @default(false)
+  lastSyncedAt    DateTime?
+  raw             Json?
+  siteAccount     SiteAccount        @relation(fields: [siteAccountId], references: [id], onDelete: Cascade)
+  lots            PointLot[]
+  transactions    PointTransaction[]
+}
+
+model PointLot {
+  id             String       @id @default(cuid())
+  pointAccountId String
+  amount         Int
+  remaining      Int
+  grantedAt      DateTime
+  expiresAt      DateTime?
+  source         String       @default("unknown")
+  sourceRef      String?
+  estimated      Boolean      @default(false)
+  runId          String?
+  createdAt      DateTime     @default(now())
+  pointAccount   PointAccount @relation(fields: [pointAccountId], references: [id], onDelete: Cascade)
+
+  @@index([pointAccountId, expiresAt])
+}
+
+model PointTransaction {
+  id             String       @id @default(cuid())
+  pointAccountId String
+  type           String
+  amount         Int
+  balanceAfter   Int
+  occurredAt     DateTime     @default(now())
+  referenceType  String?
+  referenceId    String?
+  description    String?
+  raw            Json?
+  pointAccount   PointAccount @relation(fields: [pointAccountId], references: [id], onDelete: Cascade)
+
+  @@index([pointAccountId, occurredAt])
+}
+
+model Product {
+  id            String   @id @default(cuid())
+  siteId        String
+  kind          String   @default("product")
+  externalId    String
+  name          String
+  description   String?
+  imageUrl      String?
+  pointsCost    Int
+  cashCost      Decimal? @db.Decimal(10, 2)
+  stock         Int?
+  status        String   @default("on_sale")
+  limitPerUser  Int?
+  startAt       DateTime?
+  endAt         DateTime?
+  raw           Json?
+  firstSeenAt   DateTime @default(now())
+  lastSeenAt    DateTime @default(now())
+  site          Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([siteId, kind, externalId])
+  @@index([siteId, kind, status])
+}
+
+model Activity {
+  id              String      @id @default(cuid())
+  siteId          String
+  externalId      String
+  name            String
+  type            String      @default("task")
+  points          Int?
+  status          String      @default("available")
+  progressCurrent Int?
+  progressTarget  Int?
+  startAt         DateTime?
+  endAt           DateTime?
+  action          String      @default("none")
+  formSchema      Json?
+  scriptId        String?
+  raw             Json?
+  lastSyncedAt    DateTime    @default(now())
+  site            Site        @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  script          SiteScript? @relation(fields: [scriptId], references: [id], onDelete: SetNull)
+
+  @@unique([siteId, externalId])
+  @@index([siteId, status])
+  @@index([scriptId])
+}
+
+model ScriptSource {
+  id           String          @id @default(cuid())
+  name         String
+  repoUrl      String
+  branch       String          @default("main")
+  indexUrl     String
+  trustLevel   String          @default("official")
+  enabled      Boolean         @default(true)
+  lastSyncedAt DateTime?
+  lastError    String?
+  createdAt    DateTime        @default(now())
+  versions     ScriptVersion[]
+  apps         SourceApp[]
+  sites        Site[]
+}
+
+model SourceApp {
+  id          String       @id @default(cuid())
+  sourceId    String
+  key         String
+  name        String
+  appId       String
+  platform    String       @default("wechat_miniprogram")
+  description String       @default("")
+  iconUrl     String?
+  pointsName  String       @default("积分")
+  category    String       @default("")
+  version     String       @default("")
+  manifest    Json
+  scriptCount Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  source      ScriptSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceId, key])
+  @@index([name])
+  @@index([updatedAt])
+}
+
+model Script {
+  id               String          @id @default(cuid())
+  key              String          @unique
+  name             String
+  description      String          @default("")
+  kind             String          @default("action")
+  capability       String?
+  runtime          String          @default("node")
+  commonVersion    String?
+  currentVersionId String?
+  status           String          @default("active")
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  versions         ScriptVersion[]
+  bindings         Binding[]
+}
+
+model ScriptVersion {
+  id                 String       @id @default(cuid())
+  scriptId           String
+  sourceId           String?
+  version            String
+  manifest           Json
+  bundlePath         String?
+  bundleHash         String?
+  bundleSize         Int?
+  depsHash           String?
+  sdkVersion         String?
+  commonVersion      String?
+  reviewStatus       String       @default("reviewed")
+  changelog          String?
+  minPlatformVersion String?
+  createdAt          DateTime     @default(now())
+  script             Script       @relation(fields: [scriptId], references: [id], onDelete: Cascade)
+  source             ScriptSource? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  runs               Run[]
+
+  @@unique([scriptId, version, bundleHash])
+  @@index([scriptId])
+}
+
+model Binding {
+  id            String       @id @default(cuid())
+  siteId        String
+  siteAccountId String
+  scriptId      String
+  configEnc     Json?
+  enabled       Boolean      @default(true)
+  priority      Int          @default(100)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  site          Site         @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  siteAccount   SiteAccount  @relation(fields: [siteAccountId], references: [id], onDelete: Cascade)
+  script        Script       @relation(fields: [scriptId], references: [id], onDelete: Cascade)
+  tasks         Task[]
+
+  @@unique([siteId, siteAccountId, scriptId])
+  @@index([siteId])
+}
+
+model Task {
+  id             String   @id @default(cuid())
+  bindingId      String
+  capability     String
+  configEnc      Json?
+  cron           String?
+  timezone       String   @default("")
+  runAt          DateTime?
+  enabled        Boolean  @default(true)
+  timeoutSeconds Int      @default(120)
+  maxAttempts    Int      @default(3)
+  concurrency    Int      @default(1)
+  nextRunAt      DateTime?
+  lastRunAt      DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  binding        Binding  @relation(fields: [bindingId], references: [id], onDelete: Cascade)
+  runs           Run[]
+
+  @@index([enabled, nextRunAt])
+  @@index([bindingId])
+}
+
+model Run {
+  id              String         @id @default(cuid())
+  taskId          String?
+  siteScriptId    String?
+  siteId          String?
+  siteAccountId   String?
+  scriptVersionId String?
+  status          String         @default("queued")
+  notBefore       DateTime?
+  exitCode        Int?
+  startedAt       DateTime?
+  finishedAt      DateTime?
+  durationMs      Int?
+  errorCode       String?
+  errorMessage    String?
+  summary         Json?
+  input           Json?
+  logPath         String?
+  artifactPath    String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  task            Task?          @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  siteScript      SiteScript?    @relation(fields: [siteScriptId], references: [id], onDelete: SetNull)
+  site            Site?          @relation(fields: [siteId], references: [id], onDelete: SetNull)
+  siteAccount     SiteAccount?   @relation(fields: [siteAccountId], references: [id], onDelete: SetNull)
+  scriptVersion   ScriptVersion? @relation(fields: [scriptVersionId], references: [id], onDelete: SetNull)
+  logs            RunLog[]
+
+  @@index([status, createdAt])
+  @@index([status, notBefore])
+  @@index([taskId, createdAt])
+  @@index([siteScriptId, createdAt])
+  @@index([siteId, createdAt])
+  @@index([updatedAt])
+}
+
+model RunLog {
+  id      String   @id @default(cuid())
+  runId   String
+  ts      DateTime @default(now())
+  level   String   @default("info")
+  message String
+  data    Json?
+  run     Run      @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId, ts])
+  @@index([ts])
+}
+
+model Setting {
+  key       String   @id
+  value     Json
+  encrypted Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+}
+
+model FormTemplate {
+  id           String        @id @default(cuid())
+  name         String
+  description  String        @default("")
+  fields       Json
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  accountForms AccountForm[]
+}
+
+model AccountForm {
+  id              String       @id @default(cuid())
+  wechatAccountId String
+  templateId      String
+  values          Json
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  wechatAccount   WechatAccount @relation(fields: [wechatAccountId], references: [id], onDelete: Cascade)
+  template        FormTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@unique([wechatAccountId, templateId])
+  @@index([wechatAccountId])
+  @@index([templateId])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  channel   String
+  eventType String
+  title     String
+  body      String
+  payload   Json?
+  status    String    @default("pending")
+  error     String?
+  sentAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([createdAt])
+}
+
+model SiteScript {
+  id           String   @id @default(cuid())
+  siteId       String
+  name         String
+  description  String   @default("")
+  filePath     String
+  args         String   @default("")
+  cron         String   @default("")
+  timezone     String   @default("")
+  nextRunAt    DateTime?
+  lastRunAt    DateTime?
+  capabilities String[] @default([])
+  enabled      Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  site         Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  runs         Run[]
+  activities   Activity[]
+
+  @@index([siteId])
+  @@index([enabled, nextRunAt])
+}
+
+model SiteEnvVar {
+  id          String   @id @default(cuid())
+  siteId      String
+  key         String
+  valueEnc    String
+  secret      Boolean  @default(false)
+  description String   @default("")
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([siteId, key])
+  @@index([siteId])
+}
+
+model Order {
+  id                String      @id @default(cuid())
+  siteId            String
+  siteAccountId     String
+  capability        String
+  externalId        String?
+  productExternalId String?
+  quantity          Int         @default(1)
+  pointsCost        Int?
+  cashCost          Decimal?    @db.Decimal(10, 2)
+  status            String      @default("pending")
+  message           String?
+  raw               Json?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  site              Site        @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  siteAccount       SiteAccount @relation(fields: [siteAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([siteId, siteAccountId, externalId])
+  @@index([siteId, createdAt])
+  @@index([siteAccountId, createdAt])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  adminId    String?
+  action     String
+  targetType String?
+  targetId   String?
+  detail     Json?
+  ip         String?
+  createdAt  DateTime @default(now())
+  admin      Admin?   @relation(fields: [adminId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+}
+
+/// 每次调用 YYB 服务的记录；用于成功率统计和排查。
+model YybRequestLog {
+  id                String   @id @default(cuid())
+  type              String
+  source            String   @default("api")
+  method            String   @default("POST")
+  path              String
+  status            String
+  httpStatus        Int?
+  durationMs        Int?
+  errorMessage      String?
+  wechatAccountId   String?
+  wechatAccountName String?
+  siteId            String?
+  siteName          String?
+  siteAccountId     String?
+  createdAt         DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([type])
+  @@index([status])
+  @@index([wechatAccountId])
+  @@index([siteId])
+}

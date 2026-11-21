@@ -1,0 +1,78 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-welfare}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-welfare}
+      POSTGRES_DB: ${POSTGRES_DB:-welfare}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # 只绑定本机，方便宿主机跑 prisma migrate/studio；不需要可删
+    ports:
+      - '127.0.0.1:5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-welfare} -d ${POSTGRES_DB:-welfare}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    command: sh -c "pnpm --filter @free-welfare/db migrate && node apps/api/dist/main.js"
+    ports:
+      - '3000:3000'
+    volumes:
+      - ../../data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'node -e "fetch(\"http://127.0.0.1:3000/api/v1/health\").then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  worker:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    command: node apps/worker/dist/main.js
+    volumes:
+      - ../../data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ../caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+
+  # 可选：和平台同机部署 YYB 时取消注释，并在 .env 里把 YYB_BASE_URL 设为 http://yyb-go:8000
+  # yyb-go:
+  #   image: ghcr.io/525815266/yyb-go-enhanced:latest
+  #   restart: unless-stopped
+  #   env_file: .env
+  #   volumes:
+  #     - yyb_data:/data
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
+  # yyb_data:

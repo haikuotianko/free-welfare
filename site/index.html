@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Free Welfare · 自托管福利工具</title>
+    <meta
+      name="description"
+      content="Free Welfare 是一个自托管的微信小程序签到、积分和任务管理平台：多账号、应用商店、定时队列、YYB 集成和实时日志。"
+    />
+    <meta name="theme-color" content="#070b14" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a class="brand" href="./">
+          <span class="brand-mark">FW</span>
+          <span class="brand-copy">
+            <strong>Free Welfare</strong>
+            <small>自托管福利工具</small>
+          </span>
+        </a>
+        <nav class="nav">
+          <a href="#features">功能</a>
+          <a href="#screens">截图</a>
+          <a href="#start">快速开始</a>
+          <a href="#docs">文档</a>
+          <a class="nav-cta" href="https://github.com/haikuotianko/free-welfare" target="_blank" rel="noreferrer">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="wrap hero-inner">
+          <div class="hero-copy">
+            <p class="eyebrow"><span class="dot"></span> 自托管 · 开源 · MIT</p>
+            <h1>每天的签到和积分，<br /><span class="gradient">收进一个面板。</span></h1>
+            <p class="lead">
+              Free Welfare 是一个自托管的微信小程序福利管理平台。多账号、应用脚本、
+              定时队列、YYB 账号同步、积分统计和实时日志，全部跑在你自己的服务器上。
+            </p>
+            <div class="actions">
+              <a class="button primary" href="#start">开始部署</a>
+              <a class="button ghost" href="https://github.com/haikuotianko/free-welfare" target="_blank" rel="noreferrer">查看源码</a>
+            </div>
+            <p class="fine-print">Docker Compose 部署 · 数据保存在本机 · 不依赖第三方云服务</p>
+          </div>
+          <div class="hero-art" aria-hidden="true">
+            <div class="glow glow-a"></div>
+            <div class="glow glow-b"></div>
+            <div class="mini-window">
+              <div class="mini-bar"><span></span><span></span><span></span></div>
+              <div class="mini-body">
+                <div class="mini-stat"><span>今日运行</span><b>126</b><i>次</i></div>
+                <div class="mini-stat"><span>积分总数</span><b>93,000</b></div>
+                <div class="mini-row"><span class="mini-chip green">成功</span><span>谢瑞麟 · 签到</span><em>5.2s</em></div>
+                <div class="mini-row"><span class="mini-chip red">失败</span><span>蜜雪冰城 · 签到</span><em>0.4s</em></div>
+                <div class="mini-row"><span class="mini-chip amber">运行中</span><span>海天美味馆 · 签到</span><em>—</em></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="stats wrap">
+        <div class="stat"><b>104</b><span>预置应用脚本</span></div>
+        <div class="stat"><b>多账号</b><span>按账号独立配置</span></div>
+        <div class="stat"><b>Docker</b><span>一条命令部署</span></div>
+        <div class="stat"><b>MIT</b><span>开源可修改</span></div>
+      </section>
+
+      <section id="features" class="section wrap">
+        <div class="section-head">
+          <p class="eyebrow"><span class="dot"></span> 功能</p>
+          <h2>日常签到需要的东西，这里都有。</h2>
+          <p>不是又一个脚本集合，而是一套能长期运行的账号、任务和日志面板。</p>
+        </div>
+        <div class="features">
+          <article class="feature">
+            <div class="icon">01</div>
+            <h3>多账号与表单</h3>
+            <p>一个微信账号管理多个应用；手机号、生日等表单资料按账号保存，环境变量可以引用表单字段。</p>
+          </article>
+          <article class="feature">
+            <div class="icon">02</div>
+            <h3>应用商店</h3>
+            <p>从脚本源订阅应用和脚本，安装、更新、回滚都有版本记录；官方脚本源已内置 104 个应用。</p>
+          </article>
+          <article class="feature">
+            <div class="icon">03</div>
+            <h3>定时与队列</h3>
+            <p>每个脚本独立 cron，全局并发、单账号、单应用并发限制；队列和运行状态实时刷新。</p>
+          </article>
+          <article class="feature">
+            <div class="icon">04</div>
+            <h3>YYB 集成与审计</h3>
+            <p>同步 YYB 微信账号、扫码添加、自动取码和手机号授权；所有 YYB 请求可查询成功率和耗时。</p>
+          </article>
+          <article class="feature">
+            <div class="icon">05</div>
+            <h3>实时日志</h3>
+            <p>SSE 推送运行状态和日志，任务结束立即更新；支持运行详情、错误码、重跑和完整历史。</p>
+          </article>
+          <article class="feature">
+            <div class="icon">06</div>
+            <h3>数据在自己手里</h3>
+            <p>PostgreSQL、脚本和缓存全部保存在本机；Docker Compose 部署，不依赖第三方托管。</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="screens" class="section wrap">
+        <div class="section-head">
+          <p class="eyebrow"><span class="dot"></span> 截图</p>
+          <h2>桌面和手机，都能一眼看清。</h2>
+          <p>截图中的账号名称、ID 和手机号已做脱敏处理。</p>
+        </div>
+        <div class="shots">
+          <figure class="shot shot-wide">
+            <img src="./assets/screenshots/dashboard.jpg" alt="Free Welfare 总览页面" loading="lazy" />
+            <figcaption><b>总览</b><span>运行、积分、活动和队列一屏掌握</span></figcaption>
+          </figure>
+          <figure class="shot">
+            <img src="./assets/screenshots/accounts.jpg" alt="Free Welfare 账号页面" loading="lazy" />
+            <figcaption><b>账号</b><span>按应用查看签到状态、积分和详情</span></figcaption>
+          </figure>
+          <figure class="shot">
+            <img src="./assets/screenshots/yyb-requests.jpg" alt="Free Welfare YYB 请求页面" loading="lazy" />
+            <figcaption><b>YYB 请求</b><span>请求类型、成功率、账号和应用筛选</span></figcaption>
+          </figure>
+          <figure class="shot shot-phone">
+            <img src="./assets/screenshots/mobile.jpg" alt="Free Welfare 手机端账号页面" loading="lazy" />
+            <figcaption><b>手机端</b><span>底部导航、账号卡片和运行日志</span></figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="start" class="section wrap">
+        <div class="start-card">
+          <div class="start-copy">
+            <p class="eyebrow"><span class="dot"></span> 快速开始</p>
+            <h2>三条命令，跑起来。</h2>
+            <p>
+              需要 Node.js 22+、pnpm 和 Docker。首次启动先执行数据库迁移；
+              详细配置（YYB、通知、加密密钥）见 README。
+            </p>
+            <div class="start-links">
+              <a class="button primary" href="https://github.com/haikuotianko/free-welfare#开发phase-0-目标" target="_blank" rel="noreferrer">查看部署文档</a>
+              <a class="button ghost" href="https://github.com/haikuotianko/free-welfare-scripts" target="_blank" rel="noreferrer">脚本仓库</a>
+            </div>
+          </div>
+          <pre class="code"><code><span class="c"># 1. 克隆</span>
+git clone https://github.com/haikuotianko/free-welfare.git
+cd free-welfare
+
+<span class="c"># 2. 安装依赖</span>
+pnpm install
+
+<span class="c"># 3. 启动 PostgreSQL 和开发服务</span>
+docker compose -f deploy/compose/docker-compose.yml \
+  -f deploy/compose/docker-compose.dev.yml up -d postgres
+pnpm db:migrate
+pnpm dev</code></pre>
+        </div>
+      </section>
+
+      <section id="stack" class="section wrap">
+        <div class="section-head compact">
+          <p class="eyebrow"><span class="dot"></span> 技术栈</p>
+          <h2>简单、可替换、方便二次开发。</h2>
+        </div>
+        <div class="stack">
+          <span>Vue 3</span><span>TypeScript</span><span>NestJS</span><span>Prisma</span>
+          <span>PostgreSQL</span><span>Docker</span><span>Vitest</span><span>GitHub Actions</span>
+        </div>
+      </section>
+
+      <section id="docs" class="section wrap">
+        <div class="docs-grid">
+          <a class="doc-card" href="https://github.com/haikuotianko/free-welfare" target="_blank" rel="noreferrer">
+            <b>项目源码</b><span>README、部署、配置和开发说明</span>
+          </a>
+          <a class="doc-card" href="https://github.com/haikuotianko/free-welfare/tree/main/docs" target="_blank" rel="noreferrer">
+            <b>设计文档</b><span>架构、数据模型、脚本系统和路线图</span>
+          </a>
+          <a class="doc-card" href="https://github.com/haikuotianko/free-welfare-scripts" target="_blank" rel="noreferrer">
+            <b>脚本源</b><span>应用脚本、index.json 和订阅地址</span>
+          </a>
+          <a class="doc-card" href="https://github.com/haikuotianko/free-welfare/blob/main/CHANGELOG.md" target="_blank" rel="noreferrer">
+            <b>更新记录</b><span>每次功能、修复和界面调整</span>
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap footer-inner">
+        <div>
+          <b>Free Welfare</b>
+          <span>自托管福利工具</span>
+        </div>
+        <p>仅用于操作本人已授权的账号。请遵守各平台规则和当地法律。</p>
+        <span>© 2026 · MIT</span>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,86 @@
+schema_version: 1
+key: aima
+name: 爱玛会员俱乐部
+app_id: wx2dcfb409fd5ddfb4
+platform: wechat_miniprogram
+category: 会员/积分/商城
+icon: ""
+status: partial
+updated_at: "2026-11-16"
+
+source:
+  package: "__APP__.wxapkg"
+  version: "228"
+  obtained_at: "2026-11-16"
+  obtained_from: "PC 微信 xwechat 缓存"
+
+network:
+  mode: whitelist
+  root_urls:
+    - id: scrm
+      url: https://scrm.aimatech.com
+      purpose: 登录/会员/积分/商品/活动
+      path_prefix: /aima/wxclient
+      used_by: [auth, sign_in, points, products, activities]
+      required: true
+  allowed_origins:
+    - https://scrm.aimatech.com
+  notes: "图片在 aimascrm.oss-cn-beijing.aliyuncs.com，仅展示，不加入脚本白名单。"
+
+encryption:
+  transport: tls
+  request_signing: md5
+  request_encryption: none
+  response_encryption: none
+  storage_encryption: unknown
+  certificate_pinning: unknown
+  notes: "Sign = md5(App-Id + Time-Stamp + TraceLog-Id + Access-Token[50:80] + AimaScrm321_^)"
+
+auth:
+  login_endpoint: POST /aima/wxclient/user/members:login
+  method: POST
+  code_field: code
+  session_field: Access-Token
+  session_type: header
+  session_expiry: unknown
+  refresh: re-login-code
+  phone_binding: unknown
+  notes: "响应头 set-access-token 返回 token；后续请求头 Access-Token。"
+
+points:
+  currency: 积分
+  balance_endpoint: GET /aima/wxclient/member/IndexInfo
+  history_endpoint: ""
+  rules_endpoint: POST /aima/wxclient/vip/point_rule/find
+  expiry_policy: unknown
+  expiry_verified: false
+  notes: "余额字段 content.vipMemberPointDTO.pointValue。"
+
+products:
+  list_endpoint: POST /aima/wxclient/product/awards/deploy_up:search
+  detail_endpoint: GET /aima/wxclient/product/awards/deploy_up/{id}
+  redeem_endpoint: POST /aima/wxclient/order/buyer/orders
+  notes: "积分商品用 storePoint>0 过滤掉现金商品；库存取 skuIdList.remainingNum 之和；限购取 conditionDTO.cnt。"
+
+activities:
+  list_endpoint: POST /aima/wxclient/vip/member/point_tasks:search
+  claim_endpoint: ""
+  notes: "响应 content[]；joinStatus 的完成映射尚未逐项验证。"
+
+scripts:
+  planned:
+    - sign_in
+    - points
+    - products
+    - activities
+  common:
+    - auth
+    - md5
+  notes: "平台脚本：sign-in.js / points.js / products.js / activities.js / common.js。"
+
+risks:
+  - "商品接口可能同时返回现金商品，必须过滤 storePoint>0。"
+  - "任务 joinStatus 语义未验证，活动状态可能不完全准确。"
+  - "页面版本 223/228；接口路径变化时需要重新解包核对。"
+
+notes: "2026-11-16 解包 228 版；签到、积分已实测，商品同步 37 个积分商品，任务同步 3 个。"

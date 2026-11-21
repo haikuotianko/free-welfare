@@ -1,0 +1,13 @@
+export declare const CAPABILITIES: readonly ["login", "register", "sign_in", "points", "products", "activities", "redeem", "grab"];
+export type Capability = (typeof CAPABILITIES)[number];
+export declare const NETWORK_MODES: readonly ["whitelist", "unrestricted"];
+export type NetworkMode = (typeof NETWORK_MODES)[number];
+export declare const SCRIPT_KINDS: readonly ["action", "common"];
+export type ScriptKind = (typeof SCRIPT_KINDS)[number];
+export declare const REVIEW_STATUSES: readonly ["reviewed", "community", "custom"];
+export type ReviewStatus = (typeof REVIEW_STATUSES)[number];
+export declare const RUN_STATUSES: readonly ["queued", "running", "succeeded", "failed", "canceled", "timeout"];
+export type RunStatus = (typeof RUN_STATUSES)[number];
+export declare const ACCOUNT_STATUSES: readonly ["alive", "session_only", "unknown", "expired", "disabled"];
+export type AccountStatus = (typeof ACCOUNT_STATUSES)[number];
+export declare const DEFAULT_TIMEZONE: string;

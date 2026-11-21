@@ -1,0 +1,31 @@
+{
+  "name": "free-welfare",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@12.9.1",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "predev": "pnpm db:generate && pnpm --filter @free-welfare/shared --filter @free-welfare/domain --filter @free-welfare/db --filter @free-welfare/sdk build",
+    "dev": "pnpm -r --parallel --if-present dev",
+    "dev:api": "pnpm --filter @free-welfare/api dev",
+    "dev:web": "pnpm --filter @free-welfare/web dev",
+    "dev:worker": "pnpm --filter @free-welfare/worker dev",
+    "build": "pnpm -r --if-present build",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "pnpm -r --if-present test",
+    "lint": "echo \"lint preset comes with the first feature PR\"",
+    "db:generate": "pnpm --filter @free-welfare/db generate",
+    "db:migrate": "pnpm --filter @free-welfare/db migrate",
+    "db:push": "pnpm --filter @free-welfare/db push",
+    "db:studio": "pnpm --filter @free-welfare/db studio",
+    "import:apps": "pnpm --filter @free-welfare/db exec node --env-file=../../.env ../../tools/import-apps.cjs",
+    "build:app-source": "node tools/build-app-source.cjs",
+    "check:yyb": "node tools/check-yyb.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

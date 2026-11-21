@@ -1,0 +1,45 @@
+# 依赖/构建
+node_modules/
+dist/
+build/
+coverage/
+
+# 环境与密钥
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# 运行时数据
+data/
+*.log
+*.sqlite
+*.sqlite3
+*.db
+
+# 小程序分析产物（不要提交解包代码/抓包/截图）
+*.wxapkg
+*.wxpkg
+*.har
+analysis/packages/*/raw/
+analysis/packages/*/raw-*/
+analysis/packages/*/sub-raw/
+analysis/packages/*/decrypted/
+analysis/packages/*/__plugin__/
+analysis/packages/**/__plugin__/
+analysis/packages/*/apps/
+analysis/packages/*/explore/
+analysis/packages/*/subPages/
+analysis/packages/*/unpacked*/
+analysis/packages/_recent/
+analysis/tools/*/bin/*
+!analysis/tools/*/bin/.gitkeep
+analysis/packages/*/unpacked/*
+!analysis/packages/*/unpacked/.gitkeep
+analysis/packages/*/fixtures/*
+!analysis/packages/*/fixtures/.gitkeep
+!analysis/packages/*/fixtures/*.example.json
+analysis/packages/*/screenshots/*
+!analysis/packages/*/screenshots/.gitkeep
