@@ -63,11 +63,24 @@ NAS 上 80/443 常被系统占用，可改成 `8080` / `8443`。`APP_PORT` 是�
 docker exec -t <postgres容器> pg_dump -U welfare welfare > backup.sql
 ```
 
-升级：
+升级（预构建镜像，推荐）：
+
+```bash
+cd deploy/compose
+./update.sh
+# NAS：
+# COMPOSE_FILE=docker-compose.nas.yml ./update.sh
+```
+
+脚本会 `pull api worker` 并 `up -d --no-build`。`api` 先执行迁移，`worker` 等 `api` 健康后再启动。
+
+升级（源码构建）：
 
 ```bash
 git pull
 docker compose -f deploy/compose/docker-compose.yml up -d --build
 ```
+
+升级前先备份数据库和 `data/`；数据库迁移是向前执行的，回滚镜像不一定能回滚 schema。完整说明见 [26 部署方式](../../docs/26-deployment.md#12-更新已经运行的实例)。
 
 更多方式见 [26 部署方式](../../docs/26-deployment.md)。

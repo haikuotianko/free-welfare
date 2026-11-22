@@ -191,3 +191,123 @@ pg_dump "postgresql://welfare:密码@127.0.0.1:5433/welfare" > backup.sql
 - **首次启动很慢**：Windows 安装包/macOS/Linux 脚本首次会下载 npm 依赖和 PostgreSQL 二进制。
 - **Docker 启动失败 `job failed without details`**：Docker Desktop 的 Hyper-V 虚拟机内存不足；关闭一些程序或给 Docker 分配至少 2GB。
 - **YYB 不可用**：平台仍可启动，但取码/手机号授权/同步账号会失败；在设置页或 `.env` 配好 YYB 地址和 token。
+
+## 11. 生产实例和开发实例同时运行
+
+推荐做法：**NAS 只跑生产实例，本地电脑跑开发实例**。不要直接修改 NAS 上正在运行的代码目录。
+
+| | 生产（NAS） | 开发（本地） |
+| --- | --- | --- |
+| 代码 | 固定镜像 tag 或 release | `main` + 本地修改 |
+| 数据库 | 生产 PostgreSQL / `fw-pgdata` | 独立开发数据库 |
+| `data/` | 生产目录 / `fw-data` | 独立目录 |
+| 端口 | 3000 / 80 / 443 | 5173 / 3000 或 3100 |
+| 微信账号 | 真实账号 | 测试账号，或禁用定时 |
+| 定时任务 | 正常运行 | 建议关闭 |
+
+必须分开的东西：
+
+- **不要两个 Worker 连同一个数据库**：两个实例会抢同一个队列，造成重复执行、重复签到、积分/订单重复同步。
+- **不要共用 `data/`**：脚本缓存、token、上传文件会互相覆盖。
+- **不要让开发实例对生产数据库执行迁移**：开发中的 schema 可能把生产库改坏。
+- **不要用同一个微信账号同时跑生产与开发**：很多应用的登录 token/cookie 会互踢，签到任务也可能重复。
+- **YYB 可以共用，但要小心**：YYB 本身可以被多个平台调用，但取码、手机号授权、账号同步都作用在同一个微信账号上；开发实例如果也跑真实账号，会和生产抢会话。建议开发用单独的测试微信账号，或在开发实例里关闭定时任务。
+
+### YYB 在同一台 NAS
+
+- YYB 和平台在同一个 Docker 网络：`YYB_BASE_URL=http://yyb-go:8000`。
+- YYB 是独立容器/独立 compose：用 NAS 局域网 IP，例如 `YYB_BASE_URL=http://192.168.1.10:8000`，并确认 NAS 防火墙允许该端口。
+- 不要把 YYB 端口映射到公网；只给局域网或平台容器访问。
+
+### 如果非要在同一台 NAS 上再跑一套开发实例
+
+不要复用生产 compose 项目，至少分开：
+
+```ini
+# .env.dev
+COMPOSE_PROJECT_NAME=fw-dev
+APP_URL=http://NAS地址:3100
+APP_PORT=3000
+API_HOST_PORT=3100
+CADDY_HTTP_PORT=8080
+CADDY_HTTPS_PORT=8443
+POSTGRES_PASSWORD=dev-only-password
+APP_ENCRYPTION_KEY=<32 字节 base64>
+AUTH_SESSION_SECRET=<32 字节 base64>
+```
+
+并使用独立的数据库卷 / `data/` 目录。即使端口分开了，也不要让两套实例同时操作同一个微信账号。
+
+## 12. 更新已经运行的实例
+
+### Docker（推荐）
+
+更新前先备份：
+
+```bash
+docker exec -t <postgres容器> pg_dump -U welfare welfare > backup-$(date +%F).sql
+# 同时备份 data/ 和 deploy/compose/.env
+```
+
+生产环境建议在 `.env` 里固定镜像版本，而不是永远用 `latest`：
+
+```ini
+# 在 GitHub Actions 的构建记录里找 sha-xxxx 或 release tag
+FW_IMAGE=ghcr.io/haikuotianko/free-welfare:sha-<commit>
+```
+
+然后更新：
+
+```bash
+cd deploy/compose
+./update.sh
+# NAS 专用 compose：
+# COMPOSE_FILE=docker-compose.nas.yml ./update.sh
+```
+
+脚本会执行 `docker compose pull api worker` 和 `up -d --no-build`。`api` 启动时先执行迁移，`worker` 会等 `api` 健康后再启动，避免旧 Worker 在新 schema 上跑。
+
+手动执行等价于：
+
+```bash
+docker compose -f deploy/compose/docker-compose.yml pull api worker
+docker compose -f deploy/compose/docker-compose.yml up -d --no-build
+```
+
+更新后检查：
+
+```bash
+curl http://127.0.0.1:3000/api/v1/health
+docker compose -f deploy/compose/docker-compose.yml logs --tail=100 api worker
+```
+
+回滚：
+
+1. 把 `FW_IMAGE` 改回上一个 `sha-` 版本。
+2. `docker compose pull api worker && docker compose up -d --no-build`。
+3. 如果新版本已经执行了不兼容的数据库迁移，回滚镜像不够，需要恢复备份数据库。**所以升级前必须备份。**
+
+### 源码构建的 Docker
+
+```bash
+git pull
+docker compose -f deploy/compose/docker-compose.yml up -d --build
+```
+
+### Windows 安装包
+
+下载新版本 exe，直接覆盖安装。安装包不会删除 `.env` 和 `data/`；首次启动新版本时按提示完成依赖/迁移。
+
+### macOS / Linux / npm 原生方式
+
+```bash
+# 先停止当前进程（Ctrl+C 或 systemctl stop free-welfare）
+git pull
+npm ci
+npm run npm:build
+npm install --prefix deploy/native
+npm start
+```
+
+`npm start` 会先执行数据库迁移，再启动 API/Worker。升级前同样备份 `data/` 和 `.env`。
+

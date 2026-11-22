@@ -38,7 +38,7 @@
 | Linux systemd | 单机 Linux | [deploy/linux](deploy/linux/README.md) |
 | npm 手动安装 | 想自己控制依赖/反向代理 | [npm 安装](docs/26-deployment.md#8-npm-手动安装) |
 
-> 所有原生方式都自带内置 PostgreSQL，不需要单独安装数据库；YYB 仍需单独部署。完整说明见 [26 部署方式](docs/26-deployment.md)。
+> 所有原生方式都自带内置 PostgreSQL，不需要单独安装数据库；YYB 仍需单独部署。生产实例（NAS）和本地开发实例请使用独立数据库、数据目录和微信账号；更新与冲突说明见 [26 部署方式](docs/26-deployment.md#11-生产实例和开发实例同时运行)。
 
 ## 技术栈
 
