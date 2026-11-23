@@ -29,9 +29,9 @@ async function bootstrap() {
   const webDist = webDistCandidates.find((candidate) => existsSync(join(candidate, 'index.html')));
   const indexFile = webDist ? join(webDist, 'index.html') : '';
   const hasWebBuild = Boolean(webDist && indexFile);
-  if (hasWebBuild) {
+  if (hasWebBuild && webDist) {
     await app.register(fastifyStatic, {
-      root: webDist,
+      root: join(webDist, 'assets'),
       prefix: '/assets/',
       decorateReply: true,
     });
