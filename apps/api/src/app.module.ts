@@ -13,6 +13,7 @@ import { FilesModule } from './modules/files/files.module';
 import { BindingsModule } from './modules/bindings/bindings.module';
 import { TasksModule } from './modules/tasks/tasks.module';
 import { RunsModule } from './modules/runs/runs.module';
+import { LogsModule } from './modules/logs/logs.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { PointsModule } from './modules/points/points.module';
 import { ProductsModule } from './modules/products/products.module';
@@ -39,6 +40,7 @@ import { QueueModule } from './modules/queue/queue.module';
     BindingsModule,
     TasksModule,
     RunsModule,
+    LogsModule,
     NotificationsModule,
     PointsModule,
     ProductsModule,

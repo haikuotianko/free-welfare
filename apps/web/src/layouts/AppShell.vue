@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import {
   BookOpen,
   CalendarCheck,
+  FileText,
   FolderOpen,
   FormInput,
   Globe2,
@@ -38,6 +39,7 @@ const desktopNav = [
   { to: '/forms', label: '表单', icon: FormInput },
   { to: '/files', label: '文件', icon: FolderOpen },
   { to: '/runs', label: '运行', icon: PlayCircle },
+  { to: '/logs', label: '日志', icon: FileText },
   { to: '/yyb-requests', label: 'YYB 请求', icon: ScrollText },
   { to: '/sdk', label: 'SDK 文档', icon: BookOpen },
   { to: '/settings', label: '设置', icon: Settings },
@@ -51,6 +53,7 @@ const mobileNav = [
   { to: '/activities', label: '活动', icon: CalendarCheck },
   { to: '/files', label: '文件', icon: FolderOpen },
   { to: '/runs', label: '运行', icon: PlayCircle },
+  { to: '/logs', label: '日志', icon: FileText },
   { to: '/settings', label: '我的', icon: Settings },
 ];
 
@@ -139,7 +142,7 @@ onMounted(() => {
       </main>
     </div>
 
-    <nav class="fixed inset-x-0 bottom-0 z-20 grid grid-cols-8 border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur dark:border-slate-800 dark:bg-slate-900/95 lg:hidden">
+    <nav class="fixed inset-x-0 bottom-0 z-20 grid grid-cols-9 border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur dark:border-slate-800 dark:bg-slate-900/95 lg:hidden">
       <RouterLink
         v-for="item in mobileNav"
         :key="item.to"

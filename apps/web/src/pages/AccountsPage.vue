@@ -1180,8 +1180,9 @@ onUnmounted(() => {
                     {{ signInCountdown(siteAccount, account.timeOffsetMinutes).text }}
                   </span>
                   <RouterLink
-                    :to="`/sites/${siteAccount.site.id}`"
+                    :to="`/sites/${siteAccount.site.id}#site-scripts`"
                     class="text-brand-600 hover:underline dark:text-brand-300"
+                    title="查看应用脚本"
                   >
                     详情
                   </RouterLink>

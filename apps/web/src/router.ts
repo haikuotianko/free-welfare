@@ -16,6 +16,7 @@ import OrdersPage from './pages/OrdersPage.vue';
 import NotFoundPage from './pages/NotFoundPage.vue';
 import FilesPage from './pages/FilesPage.vue';
 import RunsPage from './pages/RunsPage.vue';
+import LogsPage from './pages/LogsPage.vue';
 import YybRequestsPage from './pages/YybRequestsPage.vue';
 import SettingsPage from './pages/SettingsPage.vue';
 import SdkDocsPage from './pages/SdkDocsPage.vue';
@@ -43,6 +44,7 @@ export const router = createRouter({
     { path: '/orders', name: 'orders', component: OrdersPage, meta: { title: '兑换记录' } },
     { path: '/files', name: 'files', component: FilesPage, meta: { title: '文件' } },
     { path: '/runs', name: 'runs', component: RunsPage, meta: { title: '运行' } },
+    { path: '/logs', name: 'logs', component: LogsPage, meta: { title: '日志' } },
     { path: '/yyb-requests', name: 'yyb-requests', component: YybRequestsPage, meta: { title: 'YYB 请求' } },
     { path: '/settings', name: 'settings', component: SettingsPage, meta: { title: '设置' } },
     { path: '/sdk', name: 'sdk-docs', component: SdkDocsPage, meta: { title: 'SDK 文档' } },

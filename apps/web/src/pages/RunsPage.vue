@@ -289,7 +289,7 @@ onUnmounted(() => {
     <div class="flex flex-wrap items-end justify-between gap-2">
       <div>
         <h2 class="text-lg font-semibold">运行</h2>
-        <p class="text-sm text-slate-500">运行记录、错误码和日志；名称前会带账号名以区分账号。</p>
+        <p class="text-sm text-slate-500">运行记录、错误码和日志；这里显示最近 50 条，完整历史请用「全部日志」搜索。</p>
         <p v-if="accountStore.selectedAccount" class="mt-1 text-xs text-brand-600 dark:text-brand-300">
           当前账号：{{ accountStore.selectedAccount.displayName }}
         </p>
@@ -315,6 +315,7 @@ onUnmounted(() => {
           </button>
         </div>
         <button class="btn-ghost shrink-0" @click="load">刷新</button>
+        <RouterLink to="/logs" class="btn-ghost shrink-0">全部日志</RouterLink>
       </div>
     </div>
 

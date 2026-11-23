@@ -427,6 +427,36 @@ export interface Run {
   logs?: Array<{ id: string; ts: string; level: string; message: string; data?: unknown }>;
 }
 
+export interface RunLogEntry {
+  id: string;
+  ts: string;
+  level: string;
+  message: string;
+  data?: unknown;
+  runId: string;
+  runStatus: string;
+  runCreatedAt: string;
+  runStartedAt?: string | null;
+  runFinishedAt?: string | null;
+  durationMs?: number | null;
+  errorCode?: string | null;
+  errorMessage?: string | null;
+  siteId?: string | null;
+  siteName: string;
+  siteKey: string;
+  siteAccountId?: string | null;
+  accountId?: string | null;
+  accountName: string;
+  scriptName: string;
+}
+
+export interface RunLogPage {
+  items: RunLogEntry[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
 export interface Script {
   id: string;
   key: string;
