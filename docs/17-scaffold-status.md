@@ -162,6 +162,7 @@ pnpm dev
 
 ```bash
 cp deploy/compose/.env.example deploy/compose/.env
+docker network inspect yyb-go >/dev/null 2>&1 || docker network create yyb-go
 docker compose -f deploy/compose/docker-compose.yml up -d --build
 ```
 

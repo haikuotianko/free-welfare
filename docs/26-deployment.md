@@ -14,7 +14,7 @@ Free Welfare 支持 Docker、Windows 安装包、macOS/Linux 直接运行和 NAS
 | Linux systemd | 单机 Linux | Node.js 22+ | 内置 PostgreSQL |
 | npm 手动安装 | 想自己控制依赖/反向代理 | Node.js 22+ / npm | 内置或外部 PostgreSQL |
 
-> 所有方式都需要一个可用的 YYB-Go-Enhanced 实例；平台不内置 YYB。YYB 可以跑在同一台机器或局域网另一台机器。
+> 所有方式都需要一个可用的 [YYB-Go-Enhanced](https://github.com/525815266/YYB-Go-Enhanced) 实例；平台不内置 YYB。YYB 可以跑在同一台机器或局域网另一台机器。
 
 ## 2. Docker Compose（推荐）
 
@@ -24,6 +24,8 @@ Free Welfare 支持 Docker、Windows 安装包、macOS/Linux 直接运行和 NAS
 cp deploy/compose/.env.example deploy/compose/.env
 # 编辑 deploy/compose/.env：APP_ENCRYPTION_KEY、AUTH_SESSION_SECRET、POSTGRES_PASSWORD、
 # DATABASE_URL、YYB_BASE_URL、YYB_INTEGRATION_TOKEN、APP_URL
+# Free Welfare 与 YYB 共用同一个 Docker 网络，默认网络名 yyb-go
+docker network inspect yyb-go >/dev/null 2>&1 || docker network create yyb-go
 docker compose up -d --build
 ```
 
@@ -33,6 +35,53 @@ docker compose up -d --build
 - 数据：仓库根目录 `data/`；数据库卷 `pgdata`。
 - `api` 容器启动时会自动执行 `prisma migrate deploy`。
 - 修改 `CADDY_HTTP_PORT` / `CADDY_HTTPS_PORT` 可避开 NAS 上被占用的 80/443。
+
+### YYB 部署与 Docker 网络（重要）
+
+Free Welfare 不内置 YYB。Docker 部署时，Free Welfare 的 `api` / `worker` 和 YYB 容器**必须加入同一个用户自建网络**，否则容器内无法通过 `http://yyb-go:8000` 访问 YYB。
+
+YYB-Go-Enhanced 仓库：<https://github.com/525815266/YYB-Go-Enhanced>
+
+1. 创建两个项目共用的网络（只需一次）：
+
+```bash
+docker network create yyb-go
+```
+
+如果 YYB 已经用默认 Compose 启动，网络通常是 `qinglong_default`，可以直接复用，不必新建。
+
+2. YYB 的 `.env` 设置同一个网络名并启动：
+
+```ini
+YYB_DOCKER_NETWORK=yyb-go
+```
+
+```bash
+cd YYB-Go-Enhanced
+docker compose up -d
+```
+
+YYB 的容器名默认是 `yyb-go`，端口默认 `8000`。
+
+3. Free Welfare 的 `deploy/compose/.env`：
+
+```ini
+YYB_DOCKER_NETWORK=yyb-go
+YYB_BASE_URL=http://yyb-go:8000
+YYB_INTEGRATION_TOKEN=...
+YYB_PROTOCOL_TOKEN=...
+```
+
+如果复用 YYB 默认网络，把 `YYB_DOCKER_NETWORK` 改成 `qinglong_default`。
+
+4. 启动 Free Welfare 后验证两边在同一个网络：
+
+```bash
+docker network inspect yyb-go
+docker compose exec api node -e "fetch('http://yyb-go:8000/health').then(r=>console.log(r.status)).catch(e=>{console.error(e.message);process.exit(1)})"
+```
+
+> YYB 在另一台机器时，把 `YYB_BASE_URL` 改成 `http://YYB机器IP:8000`。容器名互访只对同一台 Docker 主机有效；此时仍建议执行一次 `docker network create yyb-go`，满足 Compose 的外部网络声明。
 
 ### 升级
 
@@ -69,6 +118,7 @@ echo <GitHub PAT> | docker login ghcr.io -u <GitHub 用户名> --password-stdin
 ```bash
 cp deploy/compose/.env.example deploy/compose/.env
 # 编辑 .env
+docker network inspect yyb-go >/dev/null 2>&1 || docker network create yyb-go
 docker compose -f deploy/compose/docker-compose.yml pull
 docker compose -f deploy/compose/docker-compose.yml up -d --no-build
 ```
@@ -78,15 +128,19 @@ docker compose -f deploy/compose/docker-compose.yml up -d --no-build
 NAS 上建议用不依赖仓库相对路径的 `deploy/compose/docker-compose.nas.yml`：
 
 1. 在 NAS 的 Docker/Container Manager 里新建项目，目录例如 `/volume1/docker/free-welfare`。
-2. 把 `docker-compose.nas.yml` 内容粘贴到项目编辑器，把 `.env` 放在同一目录。
-3. 修改 `.env`：
+2. 先在 NAS 终端创建 YYB 共用网络（如果还没有）：`docker network create yyb-go`。
+3. 把 `docker-compose.nas.yml` 内容粘贴到项目编辑器，把 `.env` 放在同一目录。
+4. 修改 `.env`：
    - `API_HOST_PORT=31888`（NAS 上有冲突时改成其他空闲端口）
    - `APP_PORT=3000`（容器内部端口，一般不用改）
    - `POSTGRES_PASSWORD` / `DATABASE_URL`
    - `APP_ENCRYPTION_KEY` / `AUTH_SESSION_SECRET`
-   - `YYB_BASE_URL=http://你的YYB地址:8000`
+   - `YYB_DOCKER_NETWORK=yyb-go`（必须和 YYB 容器使用同一个网络名）
+   - `YYB_BASE_URL=http://yyb-go:8000`（如果 YYB 在另一台机器，改成 `http://YYB地址:8000`）
    - `APP_URL=http://NAS地址:31888`（如果改了 `API_HOST_PORT`，这里也要改）
-4. 启动项目，访问 `http://NAS地址:31888/`。
+5. 启动项目，访问 `http://NAS地址:31888/`。
+
+YYB 也部署在 NAS 上时，在 YYB 的 `.env` 里设置同样的 `YYB_DOCKER_NETWORK=yyb-go`，并让 YYB 容器加入该网络。YYB 部署说明：<https://github.com/525815266/YYB-Go-Enhanced>
 
 NAS compose 使用命名卷 `fw-pgdata`、`fw-data`，不依赖 `../../data` 路径；如果要备份，映射到 NAS 共享目录也可以，把 `volumes` 改成 `/volume1/docker/free-welfare/data:/data`。
 
@@ -201,7 +255,8 @@ pg_dump "postgresql://welfare:密码@127.0.0.1:5433/welfare" > backup.sql
 - **GHCR 拉取 401/403**：镜像默认可能是私有，执行 `docker login ghcr.io` 或在 Package 设置里改为 public。
 - **首次启动很慢**：Windows 安装包/macOS/Linux 脚本首次会下载 npm 依赖和 PostgreSQL 二进制。
 - **Docker 启动失败 `job failed without details`**：Docker Desktop 的 Hyper-V 虚拟机内存不足；关闭一些程序或给 Docker 分配至少 2GB。
-- **YYB 不可用**：平台仍可启动，但取码/手机号授权/同步账号会失败；在设置页或 `.env` 配好 YYB 地址和 token。
+- **启动报 `network yyb-go declared as external, but could not be found`**：先执行 `docker network create yyb-go`；如果 YYB 已使用默认网络，把 `.env` 的 `YYB_DOCKER_NETWORK` 改成 `qinglong_default` 或实际网络名。
+- **YYB 不可用**：平台仍可启动，但取码/手机号授权/同步账号会失败；在设置页或 `.env` 配好 YYB 地址和 token，并确认容器与 YYB 在同一 Docker 网络。
 
 ## 11. 生产实例和开发实例同时运行
 
@@ -226,7 +281,8 @@ pg_dump "postgresql://welfare:密码@127.0.0.1:5433/welfare" > backup.sql
 
 ### YYB 在同一台 NAS
 
-- YYB 和平台在同一个 Docker 网络：`YYB_BASE_URL=http://yyb-go:8000`。
+- YYB 和平台在同一个 Docker 网络：`YYB_DOCKER_NETWORK=yyb-go`、`YYB_BASE_URL=http://yyb-go:8000`。
+- 如果 YYB 已用默认 Compose 启动，网络通常是 `qinglong_default`；把 `YYB_DOCKER_NETWORK` 改成 `qinglong_default`。
 - YYB 是独立容器/独立 compose：用 NAS 局域网 IP，例如 `YYB_BASE_URL=http://192.168.1.10:8000`，并确认 NAS 防火墙允许该端口。
 - 不要把 YYB 端口映射到公网；只给局域网或平台容器访问。
 
@@ -276,11 +332,12 @@ cd deploy/compose
 # COMPOSE_FILE=docker-compose.nas.yml ./update.sh
 ```
 
-脚本会执行 `docker compose pull api worker` 和 `up -d --no-build`。`api` 启动时先执行迁移，`worker` 会等 `api` 健康后再启动，避免旧 Worker 在新 schema 上跑。
+脚本会先确保 `YYB_DOCKER_NETWORK`（默认 `yyb-go`）外部网络存在，再执行 `docker compose pull api worker` 和 `up -d --no-build`。`api` 启动时先执行迁移，`worker` 会等 `api` 健康后再启动，避免旧 Worker 在新 schema 上跑。
 
 手动执行等价于：
 
 ```bash
+docker network inspect yyb-go >/dev/null 2>&1 || docker network create yyb-go
 docker compose -f deploy/compose/docker-compose.yml pull api worker
 docker compose -f deploy/compose/docker-compose.yml up -d --no-build
 ```

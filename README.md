@@ -4,7 +4,7 @@
 
 官网：<https://haikuotianko.github.io/free-welfare/> · 脚本源：<https://github.com/haikuotianko/free-welfare-scripts>
 
-每个使用者部署自己的实例和 YYB-Go-Enhanced；应用和脚本通过应用源分发，维护者审核后发布；平台负责账号、应用、脚本、任务、运行、日志、通知和网络策略。
+每个使用者部署自己的实例和 [YYB-Go-Enhanced](https://github.com/525815266/YYB-Go-Enhanced)；应用和脚本通过应用源分发，维护者审核后发布；平台负责账号、应用、脚本、任务、运行、日志、通知和网络策略。
 
 > **状态：应用脚本执行器（平台/青龙）、应用商店/应用源、应用脚本 cron、文件管理、多应用登录/签到/积分、商品/活动/表单页面已接入；已批量接入 100+ 应用脚本，详见 [应用接入目录](docs/21-app-catalog.md) 和 [应用商店](docs/22-app-store.md)。**  
 > 先读 [脚手架状态](docs/17-scaffold-status.md)、[总设计](docs/00-project-design.md) 和 [实现计划](docs/14-implementation-plan.md)。
@@ -122,6 +122,7 @@ deploy/       Docker/Compose/Caddy/Windows/macOS/Linux/native
 ```bash
 pnpm install
 cp deploy/compose/.env.example .env
+docker network inspect yyb-go >/dev/null 2>&1 || docker network create yyb-go
 docker compose -f deploy/compose/docker-compose.yml up -d postgres
 pnpm db:migrate
 pnpm import:apps -- --bind-all   # 可选：导入 data/apps 下的应用清单

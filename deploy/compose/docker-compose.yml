@@ -1,3 +1,5 @@
+# YYB 共用网络：docker network create yyb-go
+# YYB 部署文档：https://github.com/525815266/YYB-Go-Enhanced
 services:
   postgres:
     image: postgres:16-alpine
@@ -29,6 +31,9 @@ services:
       - '${API_HOST_PORT:-31888}:3000'
     volumes:
       - ../../data:/data
+    networks:
+      - default
+      - yyb-go
     depends_on:
       postgres:
         condition: service_healthy
@@ -48,6 +53,9 @@ services:
     command: node apps/worker/dist/main.js
     volumes:
       - ../../data:/data
+    networks:
+      - default
+      - yyb-go
     depends_on:
       postgres:
         condition: service_healthy
@@ -67,16 +75,16 @@ services:
     depends_on:
       - api
 
-  # 可选：和平台同机部署 YYB 时取消注释，并在 .env 里把 YYB_BASE_URL 设为 http://yyb-go:8000
-  # yyb-go:
-  #   image: ghcr.io/525815266/yyb-go-enhanced:latest
-  #   restart: unless-stopped
-  #   env_file: .env
-  #   volumes:
-  #     - yyb_data:/data
+  # YYB-Go-Enhanced 建议单独部署，并通过 yyb-go 外部网络连接：
+  # https://github.com/525815266/YYB-Go-Enhanced
+  # Free Welfare 的 api/worker 已加入该网络；YYB 侧把 YYB_DOCKER_NETWORK 设为同一个网络名。
 
 volumes:
   pgdata:
   caddy_data:
   caddy_config:
-  # yyb_data:
+
+networks:
+  yyb-go:
+    external: true
+    name: ${YYB_DOCKER_NETWORK:-yyb-go}

@@ -1,9 +1,13 @@
 # 根目录快捷入口：
+#   docker network create yyb-go
 #   cp deploy/compose/.env.example deploy/compose/.env
 #   docker compose up -d --build
 #
 # 完整服务定义在 deploy/compose/docker-compose.yml，NAS 请使用
 # deploy/compose/docker-compose.nas.yml。include 需要 Docker Compose v2.20+。
+#
+# Free Welfare 的 api/worker 会加入 yyb-go 外部网络，与 YYB-Go-Enhanced 互通；
+# 网络名可用 YYB_DOCKER_NETWORK 覆盖，YYB 侧必须使用同一个网络名。
 #
 # 保持与 `docker compose -f deploy/compose/docker-compose.yml` 相同的项目名，
 # 避免切换命令后误用新的数据卷。

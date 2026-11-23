@@ -121,6 +121,7 @@ ports:
 ```bash
 cp deploy/compose/.env.example deploy/compose/.env
 # 编辑 POSTGRES_* 和 DATABASE_URL
+docker network inspect yyb-go >/dev/null 2>&1 || docker network create yyb-go
 docker compose -f deploy/compose/docker-compose.yml up -d postgres
 ```
 

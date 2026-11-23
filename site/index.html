@@ -162,6 +162,51 @@
           </div>
         </div>
 
+        <div class="download-reco yyb-reco" id="yyb">
+          <div class="reco-copy">
+            <span class="reco-kicker">前置依赖 · <b>YYB-Go-Enhanced</b></span>
+            <h3>先部署 YYB，Docker 网络要和它一致。</h3>
+            <p>
+              Free Welfare 不内置 YYB。Docker 部署时，Free Welfare 的 api/worker 与 YYB 容器必须加入同一个用户自建网络；
+              默认网络名 <code>yyb-go</code>，可在 .env 用 <code>YYB_DOCKER_NETWORK</code> 修改。
+            </p>
+          </div>
+          <div class="reco-actions">
+            <a class="button primary" href="https://github.com/525815266/YYB-Go-Enhanced" target="_blank" rel="noreferrer">YYB 部署文档</a>
+            <a class="reco-alt" href="#yyb-steps">查看网络配置</a>
+          </div>
+        </div>
+
+        <details class="download-check" id="yyb-steps">
+          <summary>YYB-Go-Enhanced 部署与 Docker 网络配置</summary>
+          <div class="yyb-steps">
+            <p>YYB 项目地址：<a href="https://github.com/525815266/YYB-Go-Enhanced" target="_blank" rel="noreferrer">https://github.com/525815266/YYB-Go-Enhanced</a></p>
+            <p>两个项目必须在同一台 Docker 主机上，并加入同一个用户自建网络。YYB 容器名默认 <code>yyb-go</code>，所以 Free Welfare 使用 <code>http://yyb-go:8000</code> 访问。</p>
+            <div class="code-wrap">
+              <pre class="code" id="yyb-code"><code># 1. 创建共用网络（只需一次）
+docker network create yyb-go
+
+# 2. 部署 YYB，并在 YYB 的 .env 中设置
+git clone https://github.com/525815266/YYB-Go-Enhanced.git
+cd YYB-Go-Enhanced
+cp .env.example .env
+# 编辑 .env：YYB_DOCKER_NETWORK=yyb-go
+docker compose up -d
+
+# 3. Free Welfare 的 deploy/compose/.env
+YYB_DOCKER_NETWORK=yyb-go
+YYB_BASE_URL=http://yyb-go:8000
+YYB_INTEGRATION_TOKEN=你的集成令牌
+
+# 4. 启动后验证网络互通
+docker compose exec api node -e "fetch('http://yyb-go:8000/health').then(r=>console.log(r.status)).catch(()=>process.exit(1))"</code></pre>
+              <button type="button" class="copy-btn" data-copy-target="yyb-code">复制</button>
+            </div>
+            <p>如果 YYB 已用默认 Compose 启动，它的网络通常是 <code>qinglong_default</code>；把 Free Welfare 的 <code>YYB_DOCKER_NETWORK</code> 改成同一个值即可，不需要新建网络。</p>
+            <p>YYB 在另一台机器时，<code>YYB_BASE_URL</code> 改成 <code>http://YYB机器IP:8000</code>；容器名互访只对同一台 Docker 主机有效。</p>
+          </div>
+        </details>
+
         <div class="download-files">
           <a class="file-card file-primary" href="https://github.com/haikuotianko/free-welfare/releases/download/v0.1.0/Free-Welfare-Setup-0.1.0.exe">
             <span class="file-tag">Windows · 安装包</span>
@@ -332,6 +377,7 @@ chmod +x deploy/linux/start.sh
 cd free-welfare
 cp deploy/compose/.env.example deploy/compose/.env
 # 编辑 deploy/compose/.env：加密密钥、数据库密码、YYB
+docker network inspect yyb-go >/dev/null 2>&1 || docker network create yyb-go
 docker compose up -d --build</code></pre>
               <button type="button" class="copy-btn" data-copy-target="docker-code">复制</button>
             </div>
@@ -374,7 +420,8 @@ docker compose up -d --no-build</code></pre>
             <div class="code-wrap">
               <pre class="code" id="nas-code"><code>curl -O https://raw.githubusercontent.com/haikuotianko/free-welfare/main/deploy/compose/docker-compose.nas.yml
 curl -O https://raw.githubusercontent.com/haikuotianko/free-welfare/main/deploy/compose/.env.example
-mv .env.example .env</code></pre>
+mv .env.example .env
+docker network create yyb-go</code></pre>
               <button type="button" class="copy-btn" data-copy-target="nas-code">复制</button>
             </div>
             <div class="method-actions">
@@ -449,7 +496,7 @@ npm start</code></pre>
 
         <div class="download-notes">
           <div class="note-card"><h4>首次启动为什么慢？</h4><p>原生方式首次会下载 npm 依赖和 PostgreSQL 二进制；Docker 首次会拉取镜像。之后启动会快很多。</p></div>
-          <div class="note-card"><h4>需要单独安装 YYB 吗？</h4><p>需要。平台不内置 YYB-Go-Enhanced；启动后在设置页填写 YYB 地址和 token。</p></div>
+          <div class="note-card"><h4>需要单独安装 YYB 吗？</h4><p>需要。平台不内置 YYB-Go-Enhanced；先按 <a href="https://github.com/525815266/YYB-Go-Enhanced" target="_blank" rel="noreferrer">YYB 部署文档</a> 启动，并确保 Docker 网络与 Free Welfare 一致。</p></div>
           <div class="note-card"><h4>数据在哪里？</h4><p>Docker 使用 <code>pgdata</code> 卷和 <code>data/</code>；原生使用 <code>data/postgres</code> 和 <code>data/</code>。升级前先备份。</p></div>
           <div class="note-card"><h4>Windows 提示未知发布者</h4><p>安装包未签名，选择“仍要运行”即可；介意的话用 Docker 或源码方式。</p></div>
         </div>

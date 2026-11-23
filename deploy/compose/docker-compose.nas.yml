@@ -1,5 +1,6 @@
 # NAS 专用 Compose：不依赖仓库相对路径，镜像从 GHCR 拉取。
-# 用法：把本文件和 .env 放在同一目录，在 Synology/QNAP/Portainer 里作为项目启动。
+# 用法：先创建 YYB 共用网络（docker network create yyb-go，或复用 YYB 已有网络），
+# 再把本文件和 .env 放在同一目录，在 Synology/QNAP/Portainer 里作为项目启动。
 services:
   postgres:
     image: postgres:16-alpine
@@ -25,6 +26,9 @@ services:
       - '${API_HOST_PORT:-31888}:3000'
     volumes:
       - fw-data:/data
+    networks:
+      - default
+      - yyb-go
     depends_on:
       postgres:
         condition: service_healthy
@@ -41,6 +45,9 @@ services:
     command: node apps/worker/dist/main.js
     volumes:
       - fw-data:/data
+    networks:
+      - default
+      - yyb-go
     depends_on:
       postgres:
         condition: service_healthy
@@ -50,3 +57,8 @@ services:
 volumes:
   fw-pgdata:
   fw-data:
+
+networks:
+  yyb-go:
+    external: true
+    name: ${YYB_DOCKER_NETWORK:-yyb-go}

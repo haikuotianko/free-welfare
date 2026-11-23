@@ -681,6 +681,20 @@ img {
   cursor: pointer;
 }
 
+.yyb-steps {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.yyb-steps p {
+  margin: 0;
+}
+
+.yyb-steps .code-wrap {
+  margin: 0;
+}
+
 .check-row {
   display: flex;
   align-items: center;
@@ -900,7 +914,9 @@ img {
 
 .steps code,
 .method-card p code,
-.note-card code {
+.note-card code,
+.reco-copy code,
+.yyb-steps code {
   padding: 1px 5px;
   border-radius: 5px;
   color: #bae6fd;
