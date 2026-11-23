@@ -2,6 +2,8 @@
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import {
+  ArrowDown,
+  ArrowUp,
   Ban,
   CheckCircle2,
   KeyRound,
@@ -39,6 +41,7 @@ import Pagination from '../components/Pagination.vue';
 
 type SiteAccountItem = AccountOverview['siteAccounts'][number];
 type AppFilter = 'all' | 'pending' | 'done' | 'failed' | 'disabled';
+type AppSort = 'default' | 'points-asc' | 'points-desc';
 
 const APP_FILTERS: Array<{ key: AppFilter; label: string }> = [
   { key: 'all', label: '全部' },
@@ -79,6 +82,7 @@ const envEditingApp = ref('');
 const envSaving = ref(false);
 const envDraft = ref<Array<{ key: string; value: string }>>([]);
 const appFilterState = reactive<Record<string, AppFilter>>({});
+const appSortState = reactive<Record<string, AppSort>>({});
 const appPageState = reactive<Record<string, number>>({});
 const appQueryState = reactive<Record<string, string>>({});
 
@@ -359,6 +363,15 @@ function appFilterLabel(filter: AppFilter) {
   return APP_FILTERS.find((item) => item.key === filter)?.label ?? '全部';
 }
 
+function appSortOf(accountId: string): AppSort {
+  return appSortState[accountId] ?? 'default';
+}
+
+function toggleAppSort(accountId: string, sort: Exclude<AppSort, 'default'>) {
+  appSortState[accountId] = appSortOf(accountId) === sort ? 'default' : sort;
+  appPageState[accountId] = 1;
+}
+
 function appCategory(item: SiteAccountItem): Exclude<AppFilter, 'all'> {
   if (item.disabled) return 'disabled';
   if (item.signIn.status === 'done') return 'done';
@@ -383,9 +396,23 @@ function appsMatchingSearch(account: AccountOverview) {
 
 function filteredApps(account: AccountOverview) {
   const filter = appFilterOf(account.id);
-  const apps = appsMatchingSearch(account);
-  if (filter === 'all') return apps;
-  return apps.filter((item) => appCategory(item) === filter);
+  let apps = appsMatchingSearch(account);
+  if (filter !== 'all') {
+    apps = apps.filter((item) => appCategory(item) === filter);
+  }
+  const sort = appSortOf(account.id);
+  if (sort !== 'default') {
+    const direction = sort === 'points-asc' ? 1 : -1;
+    apps = [...apps].sort((left, right) => {
+      const leftValue = left.pointAccount?.balance ?? null;
+      const rightValue = right.pointAccount?.balance ?? null;
+      if (leftValue === null && rightValue === null) return 0;
+      if (leftValue === null) return 1;
+      if (rightValue === null) return -1;
+      return (leftValue - rightValue) * direction;
+    });
+  }
+  return apps;
 }
 
 function pagedApps(account: AccountOverview) {
@@ -999,6 +1026,35 @@ onUnmounted(() => {
                 @click="setAppQuery(selectedAccount.id, '')"
               >
                 <X class="h-3.5 w-3.5" />
+              </button>
+            </div>
+            <div
+              v-if="selectedAccount.siteAccounts.length > 0"
+              class="flex shrink-0 items-center gap-0.5 rounded-lg border border-slate-200 p-0.5 dark:border-slate-700"
+              role="group"
+              aria-label="按积分排序"
+            >
+              <button
+                type="button"
+                class="inline-flex items-center gap-0.5 rounded px-1.5 py-1 text-[10px] transition"
+                :class="appSortOf(selectedAccount.id) === 'points-asc' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'"
+                :aria-pressed="appSortOf(selectedAccount.id) === 'points-asc'"
+                aria-label="按积分升序"
+                title="积分从低到高；再点一次恢复默认"
+                @click="toggleAppSort(selectedAccount.id, 'points-asc')"
+              >
+                <ArrowUp class="h-3 w-3" /> 积分
+              </button>
+              <button
+                type="button"
+                class="inline-flex items-center gap-0.5 rounded px-1.5 py-1 text-[10px] transition"
+                :class="appSortOf(selectedAccount.id) === 'points-desc' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'"
+                :aria-pressed="appSortOf(selectedAccount.id) === 'points-desc'"
+                aria-label="按积分降序"
+                title="积分从高到低；再点一次恢复默认"
+                @click="toggleAppSort(selectedAccount.id, 'points-desc')"
+              >
+                <ArrowDown class="h-3 w-3" /> 积分
               </button>
             </div>
             <button
