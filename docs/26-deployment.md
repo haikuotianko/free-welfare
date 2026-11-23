@@ -18,19 +18,30 @@ Free Welfare 支持 Docker、Windows 安装包、macOS/Linux 直接运行和 NAS
 
 ## 2. Docker Compose（推荐）
 
+仓库根目录已提供 `Dockerfile` 和 `docker-compose.yml`，在仓库根目录执行：
+
 ```bash
 cp deploy/compose/.env.example deploy/compose/.env
-# 编辑 .env：APP_ENCRYPTION_KEY、AUTH_SESSION_SECRET、POSTGRES_PASSWORD、
+# 编辑 deploy/compose/.env：APP_ENCRYPTION_KEY、AUTH_SESSION_SECRET、POSTGRES_PASSWORD、
 # DATABASE_URL、YYB_BASE_URL、YYB_INTEGRATION_TOKEN、APP_URL
-docker compose -f deploy/compose/docker-compose.yml up -d --build
+docker compose up -d --build
 ```
 
+- 根目录的 `docker-compose.yml` 通过 Compose `include` 引用 `deploy/compose/docker-compose.yml`，需要 Docker Compose v2.20+；旧版本仍可用 `docker compose -f deploy/compose/docker-compose.yml up -d --build`。
+- 镜像由根目录 `Dockerfile` 构建，CI 也使用同一个文件。
 - 入口：Caddy `http://服务器IP/`；API 通过宿主机 `API_HOST_PORT`（默认 31888）暴露。
 - 数据：仓库根目录 `data/`；数据库卷 `pgdata`。
 - `api` 容器启动时会自动执行 `prisma migrate deploy`。
 - 修改 `CADDY_HTTP_PORT` / `CADDY_HTTPS_PORT` 可避开 NAS 上被占用的 80/443。
 
 ### 升级
+
+```bash
+git pull
+docker compose up -d --build
+```
+
+旧版 Compose 可继续使用：
 
 ```bash
 git pull

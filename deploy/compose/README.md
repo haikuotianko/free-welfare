@@ -12,9 +12,17 @@
 
 ## 快速启动
 
+仓库根目录已提供 `Dockerfile` 和 `docker-compose.yml`，直接执行：
+
 ```bash
 cp deploy/compose/.env.example deploy/compose/.env
-# 编辑 .env：加密密钥、数据库密码、YYB 地址/token、APP_URL
+# 编辑 deploy/compose/.env：加密密钥、数据库密码、YYB 地址/token、APP_URL
+docker compose up -d --build
+```
+
+根目录的 `docker-compose.yml` 通过 Compose `include` 引用本目录的 `docker-compose.yml`，需要 Docker Compose v2.20+；旧版本仍可使用：
+
+```bash
 docker compose -f deploy/compose/docker-compose.yml up -d --build
 ```
 

@@ -21,7 +21,7 @@ services:
     image: ${FW_IMAGE:-ghcr.io/haikuotianko/free-welfare:latest}
     build:
       context: ../..
-      dockerfile: deploy/docker/Dockerfile
+      dockerfile: Dockerfile
     restart: unless-stopped
     env_file: .env
     command: sh -c "node tools/migrate.mjs && node apps/api/dist/main.js"
@@ -42,7 +42,7 @@ services:
     image: ${FW_IMAGE:-ghcr.io/haikuotianko/free-welfare:latest}
     build:
       context: ../..
-      dockerfile: deploy/docker/Dockerfile
+      dockerfile: Dockerfile
     restart: unless-stopped
     env_file: .env
     command: node apps/worker/dist/main.js
