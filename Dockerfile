@@ -1,12 +1,8 @@
-# syntax=docker/dockerfile:1.7
-
 FROM node:22-bookworm-slim AS build
 RUN corepack enable
 WORKDIR /app
 COPY . .
-RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm \
-    --mount=type=cache,id=pnpm-cache,target=/root/.cache \
-    pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile
 RUN pnpm db:generate
 RUN pnpm build
 
@@ -26,9 +22,7 @@ COPY packages/shared/package.json packages/shared/package.json
 COPY packages/domain/package.json packages/domain/package.json
 COPY packages/sdk/package.json packages/sdk/package.json
 COPY packages/db/prisma packages/db/prisma
-RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm \
-    --mount=type=cache,id=pnpm-cache,target=/root/.cache \
-    pnpm install --prod --frozen-lockfile --filter @free-felfare/api... --filter @free-felfare/worker... \
+RUN pnpm install --prod --frozen-lockfile --filter @free-felfare/api... --filter @free-felfare/worker... \
   && pnpm --filter @free-felfare/db generate \
   && rm -rf \
        /app/node_modules/.pnpm/prisma@*/node_modules/prisma/prisma-client \
@@ -39,6 +33,8 @@ RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm \
        /app/node_modules/.pnpm/@prisma+engines@*/node_modules/@prisma/engines/libquery_engine-*.so.node \
   && find /app/node_modules -type f \( -name '*.map' -o -name '*.d.ts' \) -delete \
   && rm -rf \
+       /root/.cache \
+       /root/.local/share/pnpm \
        /usr/local/lib/node_modules/npm \
        /usr/local/lib/node_modules/corepack \
        /usr/local/bin/npm \
