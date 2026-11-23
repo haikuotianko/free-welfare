@@ -70,12 +70,45 @@ const scriptRunErrors = reactive<Record<string, string>>({});
 let runPollTimer: ReturnType<typeof setTimeout> | null = null;
 let runPollSeq = 0;
 
+type PointsExpiryMode = 'none' | 'days' | 'month' | 'year';
+
+function readPointsExpiry(
+  config: Record<string, unknown> | null | undefined,
+): { mode: PointsExpiryMode; days: string } {
+  const raw = config?.pointsExpiry;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return { mode: 'none' as PointsExpiryMode, days: '' };
+  }
+  const value = raw as Record<string, unknown>;
+  if (value.mode === 'month' || value.mode === 'year') {
+    return { mode: value.mode, days: '' };
+  }
+  if (value.mode === 'days') {
+    const days = Number(value.days);
+    return {
+      mode: 'days' as PointsExpiryMode,
+      days: Number.isFinite(days) && days > 0 ? String(Math.trunc(days)) : '',
+    };
+  }
+  return { mode: 'none' as PointsExpiryMode, days: '' };
+}
+
+function pointsExpiryLabel(config: Record<string, unknown> | null | undefined) {
+  const expiry = readPointsExpiry(config);
+  if (expiry.mode === 'days') return expiry.days ? `${expiry.days} 天有效` : '';
+  if (expiry.mode === 'month') return '按月过期';
+  if (expiry.mode === 'year') return '按年过期';
+  return '';
+}
+
 const infoForm = reactive({
   name: '',
   appId: '',
   iconUrl: '',
   description: '',
   pointsName: '积分',
+  pointsExpiryMode: 'none' as PointsExpiryMode,
+  pointsExpiryDays: '',
   scriptMode: 'platform',
   runTimeoutMinutes: '',
   registrationMode: 'unknown',
@@ -187,6 +220,9 @@ async function load() {
     infoForm.iconUrl = data.iconUrl ?? '';
     infoForm.description = data.description ?? '';
     infoForm.pointsName = data.pointsName ?? '积分';
+    const expiry = readPointsExpiry(data.config);
+    infoForm.pointsExpiryMode = expiry.mode;
+    infoForm.pointsExpiryDays = expiry.days;
     infoForm.scriptMode = data.scriptMode ?? 'platform';
     infoForm.runTimeoutMinutes =
       data.runTimeoutMinutes === null || data.runTimeoutMinutes === undefined
@@ -455,6 +491,23 @@ async function saveInfo() {
         runTimeoutMinutes > 1440)
     ) {
       throw new Error('执行超时必须是 1-1440 分钟，留空则使用系统设置');
+    }
+    const expiryMode = infoForm.pointsExpiryMode;
+    if (expiryMode === 'month' || expiryMode === 'year') {
+      config.pointsExpiry = { mode: expiryMode };
+    } else if (expiryMode === 'days') {
+      const daysText = infoForm.pointsExpiryDays.trim();
+      if (daysText) {
+        const days = Number(daysText);
+        if (!Number.isInteger(days) || days < 1 || days > 3650) {
+          throw new Error('积分有效期必须是 1-3650 天，留空表示不设置');
+        }
+        config.pointsExpiry = { mode: 'days', days };
+      } else {
+        delete config.pointsExpiry;
+      }
+    } else {
+      delete config.pointsExpiry;
     }
     await api.patch<Site>(`/sites/${id.value}`, {
       name: infoForm.name,
@@ -808,6 +861,12 @@ onUnmounted(() => {
               {{ labelOf(networkModeLabels, site.networkMode) }}
             </span>
             <span
+              v-if="pointsExpiryLabel(site.config)"
+              class="chip bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-200"
+            >
+              {{ site.pointsName }} · {{ pointsExpiryLabel(site.config) }}
+            </span>
+            <span
               v-if="site.registrationMode && site.registrationMode !== 'unknown'"
               class="chip"
               :class="registrationModeClass(site.registrationMode)"
@@ -879,6 +938,32 @@ onUnmounted(() => {
           <label class="label">积分别名</label>
           <input v-model="infoForm.pointsName" class="input" placeholder="积分" />
           <p class="mt-1 text-xs text-slate-500">用于积分、商品、抢购、订单等页面；默认“积分”。</p>
+        </div>
+        <div>
+          <label class="label">积分有效期</label>
+          <div class="flex gap-2">
+            <select v-model="infoForm.pointsExpiryMode" class="input !w-32">
+              <option value="none">不设置</option>
+              <option value="days">按天数</option>
+              <option value="month">月过期</option>
+              <option value="year">年过期</option>
+            </select>
+            <input
+              v-if="infoForm.pointsExpiryMode === 'days'"
+              v-model="infoForm.pointsExpiryDays"
+              type="number"
+              min="1"
+              max="3650"
+              class="input"
+              placeholder="天数，留空不设置"
+            />
+          </div>
+          <p class="mt-1 text-xs text-slate-500">
+            <template v-if="infoForm.pointsExpiryMode === 'days'">输入 1-3650 天；留空表示不设置。</template>
+            <template v-else-if="infoForm.pointsExpiryMode === 'month'">按自然月结束时间过期。</template>
+            <template v-else-if="infoForm.pointsExpiryMode === 'year'">按自然年结束时间过期。</template>
+            <template v-else>不记录积分有效期规则。</template>
+          </p>
         </div>
         <div>
           <label class="label">执行超时（分钟）</label>
