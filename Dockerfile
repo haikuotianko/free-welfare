@@ -11,7 +11,9 @@ RUN corepack enable && apt-get update \
   && apt-get install -y --no-install-recommends openssl \
   && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
-ENV NODE_ENV=production
+ENV NODE_ENV=production \
+    CHECKPOINT_DISABLE=1 \
+    PRISMA_HIDE_UPDATE_MESSAGE=1
 
 # 只安装 API / Worker 运行所需的依赖；Web 只保留构建后的静态文件。
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
