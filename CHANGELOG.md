@@ -12,6 +12,7 @@
 - 日志页的「运行详情」改为当前页弹窗展示，不再跳转运行页；所有弹窗支持按 Esc 关闭（嵌套弹窗只关闭最上层），行为与点击关闭一致。
 - Docker 构建文件改为仓库根目录 `Dockerfile`，并新增根目录 `docker-compose.yml` 快捷入口，支持在仓库根目录直接 `docker compose up -d --build`；GitHub Actions 和 `deploy/compose` 已同步使用根目录 Dockerfile。
 - Docker 部署新增 YYB 共用网络：`api` / `worker` 加入 `${YYB_DOCKER_NETWORK:-yyb-go}` 外部网络，YYB 侧必须使用同一个网络名；官网和部署文档补充 YYB-Go-Enhanced 部署步骤、网络配置与验证命令。
+- 修复官网截图被纵向拉伸的问题：截图图片现在按原始宽高比显示，桌面和手机端都不再变形。
 - Docker / NAS 默认宿主机 API 端口从 `3000` 改为不常用的 `31888`，容器内部仍监听 `3000`；端口冲突时可在 `.env` 覆盖 `API_HOST_PORT`。
 - 新增多种部署方式：Docker Compose、GHCR 预构建镜像（amd64/arm64）、NAS 专用 Compose、Windows 安装包/脚本、macOS 双击启动、Linux systemd，以及 npm 手动安装；原生方式内置 PostgreSQL，不再要求单独安装数据库。安装包自带 Node.js 运行时，首次启动联网安装依赖并构建，输出在 `release/windows/Free-Welfare-Setup-<版本>.exe`。
 - 新增 `20261121100000_schema_drift` 迁移，补齐 `Run.notBefore`、`Site.registrationMode/registrationNote/runTimeoutMinutes`、`SiteAccount.disabled`、`WechatAccount.timeOffsetMinutes` 和缺失索引；修复全新数据库执行迁移后 Worker 报 `column Run.notBefore does not exist` 的问题。
