@@ -228,54 +228,68 @@ YYB_BASE_URL=http://yyb-go:8000</code></pre>
           </section>
 
           <section class="deploy-panel" id="panel-docker" role="tabpanel" aria-labelledby="docker" data-deploy-panel="docker" hidden>
-            <div class="deploy-panel-head">
-              <span class="method-os os-docker">DOCKER</span>
-              <div>
-                <h3>NAS / Docker 一键安装</h3>
-                <p>使用预构建镜像，不在 NAS 或服务器上编译。适合群晖、威联通、飞牛 fnOS、TrueNAS、Unraid、极空间、绿联、Portainer 和 Linux 服务器。</p>
-              </div>
-            </div>
-            <ol class="steps">
-              <li>在 Docker 数据目录新建一个空文件夹。</li>
-              <li>运行安装脚本：自动生成密钥、创建网络并启动。</li>
-              <li>打开 <code>http://服务器IP:31888</code>，创建管理员。</li>
-            </ol>
-            <div class="code-wrap">
-              <pre class="code" id="docker-install-code"><code>mkdir -p free-welfare && cd free-welfare
-curl -fsSLO https://raw.githubusercontent.com/haikuotianko/free-welfare/main/deploy/compose/install.sh
-bash install.sh</code></pre>
-              <button type="button" class="copy-btn" data-copy-target="docker-install-code">复制</button>
-            </div>
-            <div class="method-actions">
-              <a class="button primary sm" href="https://github.com/haikuotianko/free-welfare/blob/main/docs/26-deployment.md">Docker 部署文档</a>
-              <a class="link" href="https://github.com/haikuotianko/free-welfare/pkgs/container/free-welfare">GHCR 镜像</a>
-            </div>
-            <p class="code-caption">NAS 提示权限不足时使用 <code>sudo bash install.sh</code>；YYB 已在默认网络时使用 <code>YYB_DOCKER_NETWORK=qinglong_default bash install.sh</code>。</p>
-            <p class="deploy-warning"><b>报错 <code>env file .../.env not found</code>？</b> 当前目录缺少 <code>.env</code>。运行上面的 <code>install.sh</code> 会自动生成；手动 Compose 请先下载 <a class="link" href="https://raw.githubusercontent.com/haikuotianko/free-welfare/main/deploy/compose/.env.example">.env.example</a> 并改名为 <code>.env</code>，再启动。</p>
-            <p class="code-caption">已经准备好 <code>.env</code> 时，使用预构建镜像：</p>
-            <div class="code-wrap">
-              <pre class="code" id="docker-pull-code"><code>docker pull ghcr.io/haikuotianko/free-welfare:latest
-docker compose -f docker-compose.nas.yml up -d --no-build</code></pre>
-              <button type="button" class="copy-btn" data-copy-target="docker-pull-code">复制</button>
-            </div>
-            <details class="method-notes">
-              <summary>群晖 / 威联通 / 飞牛 / TrueNAS / Unraid / 极空间 / 绿联</summary>
-              <p>这些 NAS 都可以使用 Docker Compose。图形界面入口：</p>
-              <ul class="deploy-list">
-                <li><b>群晖 DSM</b>：Container Manager → 项目 → 新增。</li>
-                <li><b>威联通 QTS</b>：Container Station → 应用程序 → 创建。</li>
-                <li><b>飞牛 fnOS</b>：Docker → Compose → 新建项目。</li>
-                <li><b>TrueNAS</b>：Apps → Custom App，或安装 Dockge / Portainer。</li>
-                <li><b>Unraid</b>：Docker → Compose Manager。</li>
-                <li><b>极空间 / 绿联</b>：Docker → 项目 / Compose。</li>
-              </ul>
-              <p>没有图形界面时直接运行上面的 <code>install.sh</code>；也可以复制下面的 Compose 内容手动创建项目。</p>
-            </details>
-            <details class="method-notes">
-              <summary>复制 docker-compose.yml（手动部署）</summary>
-              <p>新建目录并保存为 <code>docker-compose.yml</code>，再准备同目录的 <code>.env</code>。可下载 <a class="link" href="https://raw.githubusercontent.com/haikuotianko/free-welfare/main/deploy/compose/.env.example">.env.example</a> 后修改。</p>
-              <div class="code-wrap">
-                <pre class="code" id="nas-compose-code"><code># 同目录先准备 .env；运行 install.sh 会自动生成
+  <div class="deploy-panel-head">
+    <span class="method-os os-docker">DOCKER</span>
+    <div>
+      <h3>NAS / Docker Compose</h3>
+      <p>不需要 SSH 控制台。把 Compose 导入 NAS 的 Docker / Compose 项目，填写环境变量即可启动；使用预构建镜像，不在 NAS 上编译。</p>
+    </div>
+  </div>
+  <ol class="steps">
+    <li>下载 <code>docker-compose.nas.yml</code>，或在 NAS 的 Compose 项目里新建并粘贴内容。</li>
+    <li>在 NAS 的环境变量输入框填写密钥和密码；必填项见下方。</li>
+    <li>启动后打开 <code>http://NAS地址:31888</code>，创建管理员。</li>
+  </ol>
+  <div class="method-actions">
+    <a class="button primary sm" href="https://raw.githubusercontent.com/haikuotianko/free-welfare/main/deploy/compose/docker-compose.nas.yml">下载 Compose 文件</a>
+    <a class="link" href="#nas-compose-details">查看 / 复制内容</a>
+  </div>
+  <p class="code-caption">必填环境变量：<code>APP_ENCRYPTION_KEY</code>、<code>AUTH_SESSION_SECRET</code>；建议同时设置 <code>POSTGRES_PASSWORD</code>、<code>APP_URL</code>、<code>YYB_DOCKER_NETWORK</code>。</p>
+  <p class="deploy-warning"><b>新版 Compose 不再要求 <code>.env</code> 文件。</b> 如果旧版报 <code>env file .../.env not found</code>，请直接使用下面的环境变量版 Compose；只有一键脚本或手动 <code>.env</code> 方式才需要 <code>.env</code>。</p>
+
+  <details class="method-notes" id="nas-compose-details">
+    <summary>复制 docker-compose.yml（环境变量版）</summary>
+    <p>把下面的内容粘贴到 NAS 的 Compose 项目；环境变量在 NAS UI 中填写。没有环境变量输入框时，也可以把同内容保存为 <code>docker-compose.yml</code>，在目录放一个 <code>.env</code>。</p>
+    <div class="code-wrap">
+      <pre class="code" id="nas-compose-code"><code># NAS / Docker Compose（预构建镜像，不需要 .env 文件）
+# 所有配置从环境变量读取；可在 NAS 的 Compose UI 里填写，或使用同目录 .env。
+#
+# 必填环境变量：
+#   APP_ENCRYPTION_KEY      openssl rand -base64 32
+#   AUTH_SESSION_SECRET     openssl rand -base64 32
+# 可选环境变量：
+#   POSTGRES_PASSWORD       默认 welfare，建议修改
+#   DATABASE_URL            默认自动拼接 postgres 地址
+#   APP_URL                 默认 http://localhost:31888
+#   YYB_DOCKER_NETWORK      默认 yyb-go
+#   YYB_BASE_URL            默认 http://yyb-go:8000
+#   YYB_INTEGRATION_TOKEN / YYB_PROTOCOL_TOKEN
+#   API_HOST_PORT           默认 31888
+x-app-environment: &amp;app-environment
+  NODE_ENV: production
+  TZ: ${TZ:-Asia/Shanghai}
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  APP_PORT: '3000'
+  APP_URL: ${APP_URL:-http://localhost:31888}
+  APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:?APP_ENCRYPTION_KEY is required}
+  AUTH_SESSION_SECRET: ${AUTH_SESSION_SECRET:?AUTH_SESSION_SECRET is required}
+  DATABASE_URL: ${DATABASE_URL:-postgresql://welfare:${POSTGRES_PASSWORD:-welfare}@postgres:5432/welfare?schema=public}
+  YYB_BASE_URL: ${YYB_BASE_URL:-http://yyb-go:8000}
+  YYB_INTEGRATION_TOKEN: ${YYB_INTEGRATION_TOKEN:-}
+  YYB_PROTOCOL_TOKEN: ${YYB_PROTOCOL_TOKEN:-}
+  YYB_HEALTHCHECK_INTERVAL_SECONDS: ${YYB_HEALTHCHECK_INTERVAL_SECONDS:-60}
+  SCRIPT_SOURCE_URL: ${SCRIPT_SOURCE_URL:-https://raw.githubusercontent.com/haikuotianko/free-welfare-scripts/main/index.json}
+  SCRIPT_SOURCE_TRUST: ${SCRIPT_SOURCE_TRUST:-official}
+  SCRIPT_SOURCE_AUTO_SYNC: ${SCRIPT_SOURCE_AUTO_SYNC:-true}
+  SERVERCHAN_TOKEN: ${SERVERCHAN_TOKEN:-}
+  WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-2}
+  RUNNER_TIMEOUT_SECONDS: ${RUNNER_TIMEOUT_SECONDS:-120}
+  RUNNER_MEMORY_MB: ${RUNNER_MEMORY_MB:-256}
+  RUNNER_MAX_LOG_BYTES: ${RUNNER_MAX_LOG_BYTES:-262144}
+  CHECKPOINT_DISABLE: ${CHECKPOINT_DISABLE:-1}
+  PRISMA_HIDE_UPDATE_MESSAGE: ${PRISMA_HIDE_UPDATE_MESSAGE:-1}
+  DATA_DIR: /data
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -295,7 +309,8 @@ services:
   api:
     image: ${FW_IMAGE:-ghcr.io/haikuotianko/free-welfare:latest}
     restart: unless-stopped
-    env_file: .env
+    environment:
+      &lt;&lt;: *app-environment
     command: sh -c "node tools/migrate.mjs &amp;&amp; node apps/api/dist/main.js"
     ports:
       - '${API_HOST_PORT:-31888}:3000'
@@ -308,7 +323,7 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ['CMD-SHELL', 'node -e "fetch(\"http://127.0.0.1:3000/api/v1/health\").then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"']
+      test: ['CMD-SHELL', 'node -e "fetch(\"http://127.0.0.1:3000/api/v1/health\").then(r=&gt;process.exit(r.ok?0:1)).catch(()=&gt;process.exit(1))"']
       interval: 10s
       timeout: 5s
       retries: 10
@@ -316,7 +331,8 @@ services:
   worker:
     image: ${FW_IMAGE:-ghcr.io/haikuotianko/free-welfare:latest}
     restart: unless-stopped
-    env_file: .env
+    environment:
+      &lt;&lt;: *app-environment
     command: node apps/worker/dist/main.js
     volumes:
       - fw-data:/data
@@ -336,18 +352,67 @@ volumes:
 networks:
   yyb-go:
     external: true
-    name: ${YYB_DOCKER_NETWORK:-yyb-go}</code></pre>
-                <button type="button" class="copy-btn" data-copy-target="nas-compose-code">复制</button>
-              </div>
-              <p>启动前创建网络：</p>
-              <div class="code-wrap">
-                <pre class="code" id="nas-manual-code"><code>docker network inspect yyb-go >/dev/null 2>&1 || docker network create yyb-go
-docker compose -f docker-compose.yml up -d --no-build</code></pre>
-                <button type="button" class="copy-btn" data-copy-target="nas-manual-code">复制</button>
-              </div>
-              <p>源码构建才需要根目录 <a class="link" href="https://raw.githubusercontent.com/haikuotianko/free-welfare/main/Dockerfile">Dockerfile</a>；普通部署直接使用预构建镜像。</p>
-            </details>
-          </section>
+    name: ${YYB_DOCKER_NETWORK:-yyb-go}
+</code></pre>
+      <button type="button" class="copy-btn" data-copy-target="nas-compose-code">复制</button>
+    </div>
+  </details>
+
+  <details class="method-notes">
+    <summary>必填环境变量 / 没有终端时生成密钥</summary>
+    <ul class="deploy-list">
+      <li><b>APP_ENCRYPTION_KEY</b>：必填，32 字节 base64。</li>
+      <li><b>AUTH_SESSION_SECRET</b>：必填，32 字节 base64。</li>
+      <li><b>POSTGRES_PASSWORD</b>：建议修改，默认 <code>welfare</code>。</li>
+      <li><b>APP_URL</b>：建议填 <code>http://NAS地址:31888</code>。</li>
+      <li><b>YYB_DOCKER_NETWORK</b>：默认 <code>yyb-go</code>；YYB 实际网络不同时修改。</li>
+      <li><b>YYB_BASE_URL</b>：默认 <code>http://yyb-go:8000</code>。</li>
+      <li><b>YYB_INTEGRATION_TOKEN</b>：YYB 集成令牌，可启动后在设置页填写。</li>
+    </ul>
+    <p>没有终端生成密钥时：</p>
+    <div class="secret-tools">
+      <button class="button ghost sm" type="button" data-generate-secrets>生成两个随机密钥</button>
+      <div class="secret-row"><span>APP_ENCRYPTION_KEY</span><code id="generated-app-key">点击上方按钮生成</code><button type="button" class="copy-btn" data-copy-target="generated-app-key">复制</button></div>
+      <div class="secret-row"><span>AUTH_SESSION_SECRET</span><code id="generated-auth-key">点击上方按钮生成</code><button type="button" class="copy-btn" data-copy-target="generated-auth-key">复制</button></div>
+    </div>
+    <p class="code-caption">也可以在有终端的电脑执行 <code>openssl rand -base64 32</code> 两次。</p>
+  </details>
+
+  <details class="method-notes">
+    <summary>群晖 / 威联通 / 飞牛 / TrueNAS / Unraid / 极空间 / 绿联</summary>
+    <p>这些 NAS 都可以使用 Docker Compose。图形界面入口：</p>
+    <ul class="deploy-list">
+      <li><b>群晖 DSM</b>：Container Manager → 项目 → 新增。</li>
+      <li><b>威联通 QTS</b>：Container Station → 应用程序 → 创建。</li>
+      <li><b>飞牛 fnOS</b>：Docker → Compose → 新建项目。</li>
+      <li><b>TrueNAS</b>：Apps → Custom App，或安装 Dockge / Portainer。</li>
+      <li><b>Unraid</b>：Docker → Compose Manager。</li>
+      <li><b>极空间 / 绿联</b>：Docker → 项目 / Compose。</li>
+    </ul>
+    <p>把 Compose 粘贴到项目编辑器，填写环境变量后启动即可。</p>
+  </details>
+
+  <details class="method-notes">
+    <summary>有 SSH 控制台：一键脚本（可选）</summary>
+    <p>如果 NAS 开放 SSH，可以自动生成 <code>.env</code>、创建网络并启动：</p>
+    <div class="code-wrap">
+      <pre class="code" id="docker-install-code"><code>mkdir -p free-welfare && cd free-welfare
+curl -fsSLO https://raw.githubusercontent.com/haikuotianko/free-welfare/main/deploy/compose/install.sh
+bash install.sh</code></pre>
+      <button type="button" class="copy-btn" data-copy-target="docker-install-code">复制</button>
+    </div>
+    <p>NAS 提示权限不足时使用 <code>sudo bash install.sh</code>；YYB 已在默认网络时使用 <code>YYB_DOCKER_NETWORK=qinglong_default bash install.sh</code>。</p>
+  </details>
+
+  <details class="method-notes">
+    <summary>已经有 .env：手动拉取预构建镜像</summary>
+    <div class="code-wrap">
+      <pre class="code" id="docker-pull-code"><code>docker pull ghcr.io/haikuotianko/free-welfare:latest
+docker compose -f docker-compose.nas.yml up -d --no-build</code></pre>
+      <button type="button" class="copy-btn" data-copy-target="docker-pull-code">复制</button>
+    </div>
+  </details>
+</section>
 
           <section class="deploy-panel" id="panel-macos" role="tabpanel" aria-labelledby="macos" data-deploy-panel="macos" hidden>
             <div class="deploy-panel-head">

@@ -12,7 +12,13 @@
 
 ## 快速启动
 
-最简单的方式是在空目录运行一键安装脚本（预构建镜像）：
+NAS 图形界面（推荐，无需 SSH 或 `.env`）：
+
+1. 下载 [`docker-compose.nas.yml`](docker-compose.nas.yml)。
+2. 在群晖 Container Manager、飞牛 Docker、威联通 Container Station 或 Portainer 中新建 Compose 项目并粘贴内容。
+3. 在环境变量中填写 `APP_ENCRYPTION_KEY`、`AUTH_SESSION_SECRET`，建议同时设置 `POSTGRES_PASSWORD`、`APP_URL`、`YYB_DOCKER_NETWORK`。
+
+NAS 开放 SSH 时，也可以运行一键脚本（可选）：
 
 ```bash
 mkdir -p free-welfare && cd free-welfare
@@ -38,7 +44,7 @@ docker compose up -d --build
 docker compose -f deploy/compose/docker-compose.yml up -d --build
 ```
 
-YYB-Go-Enhanced 需要单独部署，并与本项目的 `api`/`worker` 加入同一个 Docker 网络。默认网络名 `yyb-go`，可在 `.env` 用 `YYB_DOCKER_NETWORK` 修改。部署说明：<https://github.com/525815266/YYB-Go-Enhanced>。
+YYB-Go-Enhanced 需要单独部署，并与本项目的 `api`/`worker` 加入同一个 Docker 网络。默认网络名 `yyb-go`，可在环境变量或 `.env` 中用 `YYB_DOCKER_NETWORK` 修改。部署说明：<https://github.com/525815266/YYB-Go-Enhanced>。
 
 - 首次启动/升级会自动执行 `prisma migrate deploy`。
 - 数据目录：仓库根目录 `data/`。

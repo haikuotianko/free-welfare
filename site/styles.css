@@ -1470,6 +1470,36 @@ img {
   overflow-wrap: anywhere;
 }
 
+.secret-tools {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.secret-row {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.secret-row span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.secret-row code {
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: #bae6fd;
+  background: rgba(2, 6, 23, 0.45);
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
 .deploy-foot {
   display: flex;
   flex-wrap: wrap;
@@ -1504,5 +1534,13 @@ img {
   .deploy-foot {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .secret-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .secret-row span {
+    grid-column: 1 / -1;
   }
 }

@@ -109,6 +109,10 @@
 
   function activateFromHash() {
     const hash = location.hash.replace(/^#/, "");
+    if (hash === "nas-compose-details") {
+      const details = document.getElementById("nas-compose-details");
+      if (details) details.open = true;
+    }
     const key = hashMap[hash];
     if (!key) return false;
     const activeKey = activate(key);
@@ -129,6 +133,44 @@
   }
 
   window.addEventListener("hashchange", activateFromHash);
+
+  document.querySelectorAll('a[href="#nas-compose-details"]').forEach((link) => {
+    link.addEventListener("click", () => {
+      const details = document.getElementById("nas-compose-details");
+      if (details) details.open = true;
+    });
+  });
+
+  function randomBase64(bytes) {
+    const data = new Uint8Array(bytes);
+    if (window.crypto && window.crypto.getRandomValues) {
+      window.crypto.getRandomValues(data);
+    } else {
+      for (let index = 0; index < data.length; index += 1) {
+        data[index] = Math.floor(Math.random() * 256);
+      }
+    }
+    let binary = "";
+    data.forEach((value) => {
+      binary += String.fromCharCode(value);
+    });
+    return btoa(binary);
+  }
+
+  const generateButton = document.querySelector("[data-generate-secrets]");
+  if (generateButton) {
+    generateButton.addEventListener("click", () => {
+      const appKey = document.getElementById("generated-app-key");
+      const authKey = document.getElementById("generated-auth-key");
+      if (appKey) appKey.textContent = randomBase64(32);
+      if (authKey) authKey.textContent = randomBase64(32);
+      const original = generateButton.textContent;
+      generateButton.textContent = "已生成，点右侧复制";
+      window.setTimeout(() => {
+        generateButton.textContent = original;
+      }, 1800);
+    });
+  }
 
   async function copyText(text) {
     if (navigator.clipboard && window.isSecureContext) {
