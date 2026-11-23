@@ -1434,6 +1434,21 @@ img {
   margin: 14px 0 0;
 }
 
+.deploy-list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.deploy-list li {
+  margin: 4px 0;
+}
+
+.deploy-list b {
+  color: #cbd5e1;
+}
+
 .deploy-foot {
   display: flex;
   flex-wrap: wrap;

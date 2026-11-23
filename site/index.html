@@ -232,7 +232,7 @@ YYB_BASE_URL=http://yyb-go:8000</code></pre>
               <span class="method-os os-docker">DOCKER</span>
               <div>
                 <h3>NAS / Docker 一键安装</h3>
-                <p>使用预构建镜像，不在 NAS 或服务器上编译。适合群晖、威联通、TrueNAS、Portainer 和 Linux 服务器。</p>
+                <p>使用预构建镜像，不在 NAS 或服务器上编译。适合群晖、威联通、飞牛 fnOS、TrueNAS、Unraid、极空间、绿联、Portainer 和 Linux 服务器。</p>
               </div>
             </div>
             <ol class="steps">
@@ -252,13 +252,92 @@ bash install.sh</code></pre>
             </div>
             <p class="code-caption">NAS 提示权限不足时使用 <code>sudo bash install.sh</code>；YYB 已在默认网络时使用 <code>YYB_DOCKER_NETWORK=qinglong_default bash install.sh</code>。</p>
             <details class="method-notes">
-              <summary>群晖 / 威联通：用 Container Manager 图形界面</summary>
-              <p>下载 <code>docker-compose.nas.yml</code> 和 <code>.env.example</code>，改名为 <code>.env</code>，在 Container Manager 新建项目导入；启动前确认 <code>YYB_DOCKER_NETWORK</code> 与 YYB 实际网络名一致。</p>
-              <p><a class="link" href="https://raw.githubusercontent.com/haikuotianko/free-welfare/main/deploy/compose/docker-compose.nas.yml">下载 Compose</a> · <a class="link" href="https://raw.githubusercontent.com/haikuotianko/free-welfare/main/deploy/compose/.env.example">下载 .env.example</a></p>
+              <summary>群晖 / 威联通 / 飞牛 / TrueNAS / Unraid / 极空间 / 绿联</summary>
+              <p>这些 NAS 都可以使用 Docker Compose。图形界面入口：</p>
+              <ul class="deploy-list">
+                <li><b>群晖 DSM</b>：Container Manager → 项目 → 新增。</li>
+                <li><b>威联通 QTS</b>：Container Station → 应用程序 → 创建。</li>
+                <li><b>飞牛 fnOS</b>：Docker → Compose → 新建项目。</li>
+                <li><b>TrueNAS</b>：Apps → Custom App，或安装 Dockge / Portainer。</li>
+                <li><b>Unraid</b>：Docker → Compose Manager。</li>
+                <li><b>极空间 / 绿联</b>：Docker → 项目 / Compose。</li>
+              </ul>
+              <p>没有图形界面时直接运行上面的 <code>install.sh</code>；也可以复制下面的 Compose 内容手动创建项目。</p>
             </details>
             <details class="method-notes">
-              <summary>手动 Compose / 源码构建 / 端口</summary>
-              <p>默认 API 端口 <code>31888</code>，可在 <code>.env</code> 改 <code>API_HOST_PORT</code>。源码构建请用根目录 <code>docker-compose.yml</code> 和 <code>Dockerfile</code>，详见部署文档。</p>
+              <summary>复制 docker-compose.yml（手动部署）</summary>
+              <p>新建目录并保存为 <code>docker-compose.yml</code>，再准备同目录的 <code>.env</code>。可下载 <a class="link" href="https://raw.githubusercontent.com/haikuotianko/free-welfare/main/deploy/compose/.env.example">.env.example</a> 后修改。</p>
+              <div class="code-wrap">
+                <pre class="code" id="nas-compose-code"><code>services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-welfare}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-welfare}
+      POSTGRES_DB: ${POSTGRES_DB:-welfare}
+    volumes:
+      - fw-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-welfare} -d ${POSTGRES_DB:-welfare}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    image: ${FW_IMAGE:-ghcr.io/haikuotianko/free-welfare:latest}
+    restart: unless-stopped
+    env_file: .env
+    command: sh -c "node tools/migrate.mjs &amp;&amp; node apps/api/dist/main.js"
+    ports:
+      - '${API_HOST_PORT:-31888}:3000'
+    volumes:
+      - fw-data:/data
+    networks:
+      - default
+      - yyb-go
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'node -e "fetch(\"http://127.0.0.1:3000/api/v1/health\").then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  worker:
+    image: ${FW_IMAGE:-ghcr.io/haikuotianko/free-welfare:latest}
+    restart: unless-stopped
+    env_file: .env
+    command: node apps/worker/dist/main.js
+    volumes:
+      - fw-data:/data
+    networks:
+      - default
+      - yyb-go
+    depends_on:
+      postgres:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+
+volumes:
+  fw-pgdata:
+  fw-data:
+
+networks:
+  yyb-go:
+    external: true
+    name: ${YYB_DOCKER_NETWORK:-yyb-go}</code></pre>
+                <button type="button" class="copy-btn" data-copy-target="nas-compose-code">复制</button>
+              </div>
+              <p>启动前创建网络：</p>
+              <div class="code-wrap">
+                <pre class="code" id="nas-manual-code"><code>docker network inspect yyb-go >/dev/null 2>&1 || docker network create yyb-go
+docker compose -f docker-compose.yml up -d --no-build</code></pre>
+                <button type="button" class="copy-btn" data-copy-target="nas-manual-code">复制</button>
+              </div>
+              <p>源码构建才需要根目录 <a class="link" href="https://raw.githubusercontent.com/haikuotianko/free-welfare/main/Dockerfile">Dockerfile</a>；普通部署直接使用预构建镜像。</p>
             </details>
           </section>
 

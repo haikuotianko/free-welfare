@@ -31,7 +31,7 @@
 | 方式 | 适合 | 入口 |
 | --- | --- | --- |
 | Windows 安装包 | Windows 用户，最省事 | [Releases](https://github.com/haikuotianko/free-welfare/releases) · [说明](deploy/windows/README.md) |
-| NAS / Docker | NAS、ARM64、服务器，一键脚本 | [部署文档](docs/26-deployment.md) |
+| NAS / Docker | 群晖、飞牛 fnOS、威联通、TrueNAS、Unraid、极空间、绿联、服务器 | [部署文档](docs/26-deployment.md) |
 | macOS / Linux | 需要 Node.js 22+ | [部署文档](docs/26-deployment.md) |
 | 开发者 / npm | 二次开发、自管 PostgreSQL | [部署文档](docs/26-deployment.md) |
 
