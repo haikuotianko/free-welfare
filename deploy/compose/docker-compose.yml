@@ -1,4 +1,4 @@
-# YYB 共用网络：docker network create yyb-go
+# YYB 共用网络：docker network create qinglong_default
 # YYB 部署文档：https://github.com/525815266/YYB-Go-Enhanced
 services:
   postgres:
@@ -33,7 +33,7 @@ services:
       - ../../data:/data
     networks:
       - default
-      - yyb-go
+      - qinglong_default
     depends_on:
       postgres:
         condition: service_healthy
@@ -55,7 +55,7 @@ services:
       - ../../data:/data
     networks:
       - default
-      - yyb-go
+      - qinglong_default
     depends_on:
       postgres:
         condition: service_healthy
@@ -75,7 +75,7 @@ services:
     depends_on:
       - api
 
-  # YYB-Go-Enhanced 建议单独部署，并通过 yyb-go 外部网络连接：
+  # YYB-Go-Enhanced 建议单独部署，并通过 qinglong_default 外部网络连接：
   # https://github.com/525815266/YYB-Go-Enhanced
   # Free Welfare 的 api/worker 已加入该网络；YYB 侧把 YYB_DOCKER_NETWORK 设为同一个网络名。
 
@@ -85,6 +85,6 @@ volumes:
   caddy_config:
 
 networks:
-  yyb-go:
+  qinglong_default:
     external: true
-    name: ${YYB_DOCKER_NETWORK:-yyb-go}
+    name: ${YYB_DOCKER_NETWORK:-qinglong_default}

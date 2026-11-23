@@ -15,7 +15,7 @@ NETWORK=""
 if [ -f .env ]; then
   NETWORK="$(grep -E '^YYB_DOCKER_NETWORK=' .env | tail -n 1 | cut -d= -f2- | tr -d '\r' || true)"
 fi
-NETWORK="${NETWORK:-yyb-go}"
+NETWORK="${NETWORK:-qinglong_default}"
 if ! docker network inspect "$NETWORK" >/dev/null 2>&1; then
   echo "创建 YYB 共用网络：$NETWORK"
   docker network create "$NETWORK"

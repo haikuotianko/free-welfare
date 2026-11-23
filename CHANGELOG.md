@@ -11,7 +11,7 @@
 - 新增「运行日志」页 `/logs`：日志持久保存在 PostgreSQL、不自动清理；支持按日志内容、账号、应用、运行状态、日志级别和时间范围筛选，50 条/页，可跳转运行详情；运行页增加「全部日志」入口，移动端底部导航增加「日志」。
 - 日志页的「运行详情」改为当前页弹窗展示，不再跳转运行页；所有弹窗支持按 Esc 关闭（嵌套弹窗只关闭最上层），行为与点击关闭一致。
 - Docker 构建文件改为仓库根目录 `Dockerfile`，并新增根目录 `docker-compose.yml` 快捷入口，支持在仓库根目录直接 `docker compose up -d --build`；GitHub Actions 和 `deploy/compose` 已同步使用根目录 Dockerfile。
-- Docker 部署新增 YYB 共用网络：`api` / `worker` 加入 `${YYB_DOCKER_NETWORK:-yyb-go}` 外部网络，YYB 侧必须使用同一个网络名；官网和部署文档补充 YYB-Go-Enhanced 部署步骤、网络配置与验证命令。
+- Docker 部署新增 YYB 共用网络：`api` / `worker` 加入 `${YYB_DOCKER_NETWORK:-qinglong_default}` 外部网络，YYB 侧必须使用同一个网络名；官网和部署文档补充 YYB-Go-Enhanced 部署步骤、网络配置与验证命令。
 - 修复官网截图被纵向拉伸的问题：截图图片现在按原始宽高比显示，桌面和手机端都不再变形。
 - Docker 镜像改为多阶段按需安装生产依赖：运行时不再携带 pnpm 缓存、TypeScript 类型声明、source map 和 Prisma CLI 未使用的引擎文件；`prisma` 改为生产依赖以保留启动迁移，镜像体积明显减小。
 - 重做官网「下载与安装」：改为 Windows / NAS·Docker / macOS / Linux / 开发者五个 Tab，默认按系统推荐并支持键盘切换；YYB 前置依赖和高级配置改为折叠，不再平铺所有方案。新增 `deploy/compose/install.sh` 一键安装脚本（生成密钥、创建网络、启动预构建镜像），文档同步收敛为「先选一种 + 折叠详情」。NAS/Docker 页加入群晖、飞牛 fnOS、威联通、TrueNAS、Unraid、极空间、绿联入口；NAS 主推可直接粘贴的环境变量版 `docker-compose.yml`（不再依赖 `.env`），SSH 一键脚本降为可选，并增加浏览器生成密钥。

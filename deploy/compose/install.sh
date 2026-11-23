@@ -72,7 +72,7 @@ else
   replace_env APP_ENCRYPTION_KEY "$app_key"
   replace_env AUTH_SESSION_SECRET "$session_key"
   replace_env APP_URL "${APP_URL:-http://$host_ip:31888}"
-  replace_env YYB_DOCKER_NETWORK "${YYB_DOCKER_NETWORK:-yyb-go}"
+  replace_env YYB_DOCKER_NETWORK "${YYB_DOCKER_NETWORK:-qinglong_default}"
   replace_env CHECKPOINT_DISABLE "1"
   replace_env PRISMA_HIDE_UPDATE_MESSAGE "1"
   chmod 600 .env 2>/dev/null || true
@@ -81,7 +81,7 @@ else
 fi
 
 network="$(grep -E '^YYB_DOCKER_NETWORK=' .env 2>/dev/null | tail -n1 | cut -d= -f2- | tr -d '\r' || true)"
-network="${network:-yyb-go}"
+network="${network:-qinglong_default}"
 
 if [ "${DRY_RUN:-0}" = "1" ]; then
   echo "DRY_RUN=1：配置已生成，跳过网络创建和容器启动。"

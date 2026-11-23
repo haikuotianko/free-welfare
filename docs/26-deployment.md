@@ -61,7 +61,7 @@ powershell -ExecutionPolicy Bypass -File deploy\windows\build-installer.ps1
 | `AUTH_SESSION_SECRET` | 是 | 32 字节 base64；`openssl rand -base64 32` |
 | `POSTGRES_PASSWORD` | 建议 | 数据库密码，默认 `welfare` |
 | `APP_URL` | 建议 | `http://NAS地址:31888` |
-| `YYB_DOCKER_NETWORK` | 否 | 默认 `yyb-go`；YYB 实际网络不同时修改 |
+| `YYB_DOCKER_NETWORK` | 否 | 默认 `qinglong_default`；YYB 使用自定义网络时修改 |
 | `YYB_BASE_URL` | 否 | 默认 `http://yyb-go:8000` |
 | `YYB_INTEGRATION_TOKEN` | 否 | YYB 集成令牌，也可启动后在设置页填写 |
 | `API_HOST_PORT` | 否 | 宿主机端口，默认 `31888` |
@@ -82,7 +82,7 @@ powershell -ExecutionPolicy Bypass -File deploy\windows\build-installer.ps1
 #   POSTGRES_PASSWORD       默认 welfare，建议修改
 #   DATABASE_URL            默认自动拼接 postgres 地址
 #   APP_URL                 默认 http://localhost:31888
-#   YYB_DOCKER_NETWORK      默认 yyb-go
+#   YYB_DOCKER_NETWORK      默认 qinglong_default
 #   YYB_BASE_URL            默认 http://yyb-go:8000
 #   YYB_INTEGRATION_TOKEN / YYB_PROTOCOL_TOKEN
 #   API_HOST_PORT           默认 31888
@@ -139,7 +139,7 @@ services:
       - fw-data:/data
     networks:
       - default
-      - yyb-go
+      - qinglong_default
     depends_on:
       postgres:
         condition: service_healthy
@@ -159,7 +159,7 @@ services:
       - fw-data:/data
     networks:
       - default
-      - yyb-go
+      - qinglong_default
     depends_on:
       postgres:
         condition: service_healthy
@@ -171,35 +171,35 @@ volumes:
   fw-data:
 
 networks:
-  yyb-go:
+  qinglong_default:
     external: true
-    name: ${YYB_DOCKER_NETWORK:-yyb-go}
+    name: ${YYB_DOCKER_NETWORK:-qinglong_default}
 ```
 
 </details>
 
 ### YYB 共用网络（重要）
 
-Free Welfare 的 `api` / `worker` 默认加入外部网络 `yyb-go`。YYB 容器必须加入同一个网络。
+Free Welfare 的 `api` / `worker` 默认加入外部网络 `qinglong_default`。YYB 容器必须加入同一个网络。
 
 ```bash
-docker network inspect yyb-go >/dev/null 2>&1 || docker network create yyb-go
+docker network inspect qinglong_default >/dev/null 2>&1 || docker network create qinglong_default
 ```
 
 YYB 的 `.env`：
 
 ```ini
-YYB_DOCKER_NETWORK=yyb-go
+YYB_DOCKER_NETWORK=qinglong_default
 ```
 
 Free Welfare 的环境变量或 `.env`：
 
 ```ini
-YYB_DOCKER_NETWORK=yyb-go
+YYB_DOCKER_NETWORK=qinglong_default
 YYB_BASE_URL=http://yyb-go:8000
 ```
 
-如果 YYB 已经用默认 Compose 启动，网络通常是 `qinglong_default`；把两边的 `YYB_DOCKER_NETWORK` 都改成 `qinglong_default` 即可。
+如果 YYB 使用自定义网络，把两边的 `YYB_DOCKER_NETWORK` 改成实际网络名。
 
 验证：
 
@@ -231,7 +231,7 @@ bash install.sh
 ```
 
 - 权限不足时使用 `sudo bash install.sh`。
-- YYB 已在默认网络时使用 `YYB_DOCKER_NETWORK=qinglong_default bash install.sh`。
+- 如果 YYB 使用自定义网络：`YYB_DOCKER_NETWORK=实际网络名 bash install.sh`。
 - 如果仍使用旧版 Compose 报 `env file .../.env not found`，请换成上面的环境变量版 Compose，或先创建 `.env`。
 
 手动拉取预构建镜像：
@@ -250,7 +250,7 @@ docker compose -f docker-compose.nas.yml up -d --no-build
 ```bash
 git clone https://github.com/haikuotianko/free-welfare.git
 cd free-welfare
-docker network inspect yyb-go >/dev/null 2>&1 || docker network create yyb-go
+docker network inspect qinglong_default >/dev/null 2>&1 || docker network create qinglong_default
 cp deploy/compose/.env.example deploy/compose/.env
 # 编辑 deploy/compose/.env
 docker compose up -d --build
@@ -362,7 +362,7 @@ docker exec -t <postgres容器> pg_dump -U welfare welfare > backup-$(date +%F).
 
 ## 6. 常见问题
 
-- **启动报 `network yyb-go declared as external, but could not be found`**：先执行 `docker network create yyb-go`，或把 `YYB_DOCKER_NETWORK` 改成 YYB 实际网络名。
+- **启动报 `network qinglong_default declared as external, but could not be found`**：先执行 `docker network create qinglong_default`，或把 `YYB_DOCKER_NETWORK` 改成 YYB 实际网络名。
 - **启动报 `env file .../.env not found`**：这是旧版/源码 Compose 的错误。新版 `docker-compose.nas.yml` 不需要 `.env`；如果使用旧版，请创建同目录 `.env`，或改用上面的环境变量版 Compose。
 - **YYB 不可用**：平台仍可启动；在设置页或 `.env` 填写 YYB 地址和 token，并确认容器在同一网络。
 - **拉取镜像慢**：GHCR 国际线路可能较慢；可在网络更好的电脑上 `docker pull` 后 `docker save`，再复制到 NAS `docker load`。

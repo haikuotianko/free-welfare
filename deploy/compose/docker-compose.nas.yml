@@ -8,7 +8,7 @@
 #   POSTGRES_PASSWORD       默认 welfare，建议修改
 #   DATABASE_URL            默认自动拼接 postgres 地址
 #   APP_URL                 默认 http://localhost:31888
-#   YYB_DOCKER_NETWORK      默认 yyb-go
+#   YYB_DOCKER_NETWORK      默认 qinglong_default
 #   YYB_BASE_URL            默认 http://yyb-go:8000
 #   YYB_INTEGRATION_TOKEN / YYB_PROTOCOL_TOKEN
 #   API_HOST_PORT           默认 31888
@@ -65,7 +65,7 @@ services:
       - fw-data:/data
     networks:
       - default
-      - yyb-go
+      - qinglong_default
     depends_on:
       postgres:
         condition: service_healthy
@@ -85,7 +85,7 @@ services:
       - fw-data:/data
     networks:
       - default
-      - yyb-go
+      - qinglong_default
     depends_on:
       postgres:
         condition: service_healthy
@@ -97,6 +97,6 @@ volumes:
   fw-data:
 
 networks:
-  yyb-go:
+  qinglong_default:
     external: true
-    name: ${YYB_DOCKER_NETWORK:-yyb-go}
+    name: ${YYB_DOCKER_NETWORK:-qinglong_default}

@@ -119,7 +119,7 @@ deploy/       Docker/Compose/Caddy/Windows/macOS/Linux/native
 ```bash
 pnpm install
 cp deploy/compose/.env.example .env
-docker network inspect yyb-go >/dev/null 2>&1 || docker network create yyb-go
+docker network inspect qinglong_default >/dev/null 2>&1 || docker network create qinglong_default
 docker compose -f deploy/compose/docker-compose.yml up -d postgres
 pnpm db:migrate
 pnpm import:apps -- --bind-all   # 可选：导入 data/apps 下的应用清单

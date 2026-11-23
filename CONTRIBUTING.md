@@ -20,7 +20,7 @@ cd free-welfare
 pnpm install
 cp deploy/compose/.env.example .env
 # 编辑 .env：数据库、APP_ENCRYPTION_KEY、YYB 地址/token
-docker network inspect yyb-go >/dev/null 2>&1 || docker network create yyb-go
+docker network inspect qinglong_default >/dev/null 2>&1 || docker network create qinglong_default
 docker compose -f deploy/compose/docker-compose.yml up -d postgres
 pnpm db:migrate
 pnpm dev

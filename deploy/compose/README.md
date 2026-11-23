@@ -26,15 +26,15 @@ curl -fsSLO https://raw.githubusercontent.com/haikuotianko/free-welfare/main/dep
 bash install.sh
 ```
 
-脚本会生成 `.env`、创建 `yyb-go` 网络并启动服务。打开 `http://服务器IP:31888`。
+脚本会生成 `.env`、创建 `qinglong_default` 网络并启动服务。打开 `http://服务器IP:31888`。
 
 需要源码构建时，仓库根目录已提供 `Dockerfile` 和 `docker-compose.yml`：
 
 ```bash
 cp deploy/compose/.env.example deploy/compose/.env
 # 编辑 deploy/compose/.env：加密密钥、数据库密码、YYB 地址/token、APP_URL
-# Free Welfare 与 YYB 共用网络，默认 yyb-go
-docker network inspect yyb-go >/dev/null 2>&1 || docker network create yyb-go
+# Free Welfare 与 YYB 共用网络，默认 qinglong_default
+docker network inspect qinglong_default >/dev/null 2>&1 || docker network create qinglong_default
 docker compose up -d --build
 ```
 
@@ -44,7 +44,7 @@ docker compose up -d --build
 docker compose -f deploy/compose/docker-compose.yml up -d --build
 ```
 
-YYB-Go-Enhanced 需要单独部署，并与本项目的 `api`/`worker` 加入同一个 Docker 网络。默认网络名 `yyb-go`，可在环境变量或 `.env` 中用 `YYB_DOCKER_NETWORK` 修改。部署说明：<https://github.com/525815266/YYB-Go-Enhanced>。
+YYB-Go-Enhanced 需要单独部署，并与本项目的 `api`/`worker` 加入同一个 Docker 网络。默认网络名 `qinglong_default`，可在环境变量或 `.env` 中用 `YYB_DOCKER_NETWORK` 修改。部署说明：<https://github.com/525815266/YYB-Go-Enhanced>。
 
 - 首次启动/升级会自动执行 `prisma migrate deploy`。
 - 数据目录：仓库根目录 `data/`。
@@ -100,7 +100,7 @@ cd deploy/compose
 # COMPOSE_FILE=docker-compose.nas.yml ./update.sh
 ```
 
-脚本会先确认 `YYB_DOCKER_NETWORK`（默认 `yyb-go`）外部网络存在，再 `pull api worker` 并 `up -d --no-build`。`api` 先执行迁移，`worker` 等 `api` 健康后再启动。
+脚本会先确认 `YYB_DOCKER_NETWORK`（默认 `qinglong_default`）外部网络存在，再 `pull api worker` 并 `up -d --no-build`。`api` 先执行迁移，`worker` 等 `api` 健康后再启动。
 
 升级（源码构建）：
 
