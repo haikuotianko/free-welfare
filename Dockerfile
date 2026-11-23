@@ -22,8 +22,8 @@ COPY packages/shared/package.json packages/shared/package.json
 COPY packages/domain/package.json packages/domain/package.json
 COPY packages/sdk/package.json packages/sdk/package.json
 COPY packages/db/prisma packages/db/prisma
-RUN pnpm install --prod --frozen-lockfile --filter @free-felfare/api... --filter @free-felfare/worker... \
-  && pnpm --filter @free-felfare/db generate \
+RUN pnpm install --prod --frozen-lockfile --filter @free-welfare/api... --filter @free-welfare/worker... \
+  && pnpm --filter @free-welfare/db generate \
   && rm -rf \
        /app/node_modules/.pnpm/prisma@*/node_modules/prisma/prisma-client \
        /app/node_modules/.pnpm/prisma@*/node_modules/prisma/libquery_engine-*.so.node \
