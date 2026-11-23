@@ -30,15 +30,12 @@
 
 | 方式 | 适合 | 入口 |
 | --- | --- | --- |
-| Docker Compose | Windows / macOS / Linux / NAS，推荐 | [部署文档](docs/26-deployment.md#2-docker-compose推荐) |
-| Docker 预构建镜像 | NAS、ARM64、服务器 | [NAS / 镜像](docs/26-deployment.md#3-docker-预构建镜像--nas) |
-| Windows 安装包 | 不想装 Docker / Node 的 Windows 用户 | [Releases](https://github.com/haikuotianko/free-welfare/releases) · [说明](deploy/windows/README.md) |
-| Windows 脚本 | 已有 Node 的 Windows 用户 | [deploy/windows](deploy/windows/README.md) |
-| macOS 双击启动 | Mac 用户 | [deploy/macos](deploy/macos/README.md) |
-| Linux systemd | 单机 Linux | [deploy/linux](deploy/linux/README.md) |
-| npm 手动安装 | 想自己控制依赖/反向代理 | [npm 安装](docs/26-deployment.md#8-npm-手动安装) |
+| Windows 安装包 | Windows 用户，最省事 | [Releases](https://github.com/haikuotianko/free-welfare/releases) · [说明](deploy/windows/README.md) |
+| NAS / Docker | NAS、ARM64、服务器，一键脚本 | [部署文档](docs/26-deployment.md) |
+| macOS / Linux | 需要 Node.js 22+ | [部署文档](docs/26-deployment.md) |
+| 开发者 / npm | 二次开发、自管 PostgreSQL | [部署文档](docs/26-deployment.md) |
 
-> 所有原生方式都自带内置 PostgreSQL，不需要单独安装数据库；YYB 仍需单独部署。生产实例（NAS）和本地开发实例请使用独立数据库、数据目录和微信账号；更新与冲突说明见 [26 部署方式](docs/26-deployment.md#11-生产实例和开发实例同时运行)。
+> 所有原生方式都自带内置 PostgreSQL，不需要单独安装数据库；YYB 仍需单独部署。生产实例（NAS）和本地开发实例请使用独立数据库、数据目录和微信账号；更新与冲突说明见 [26 部署方式](docs/26-deployment.md)。
 
 ## 技术栈
 
@@ -132,7 +129,7 @@ pnpm dev
 
 > 开发环境默认连接本机 PostgreSQL；首次运行前先执行迁移。
 >
-> 没有 pnpm 也可以用 npm 部署：`npm ci && npm run npm:build && npm install --prefix deploy/native && npm start`，详见 [26 部署方式](docs/26-deployment.md#8-npm-手动安装)。
+> 没有 pnpm 也可以用 npm 部署：`npm ci && npm run npm:build && npm install --prefix deploy/native && npm start`，详见 [26 部署方式](docs/26-deployment.md)。
 
 ## 边界
 

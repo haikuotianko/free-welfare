@@ -12,7 +12,17 @@
 
 ## 快速启动
 
-仓库根目录已提供 `Dockerfile` 和 `docker-compose.yml`，直接执行：
+最简单的方式是在空目录运行一键安装脚本（预构建镜像）：
+
+```bash
+mkdir -p free-welfare && cd free-welfare
+curl -fsSLO https://raw.githubusercontent.com/haikuotianko/free-welfare/main/deploy/compose/install.sh
+bash install.sh
+```
+
+脚本会生成 `.env`、创建 `yyb-go` 网络并启动服务。打开 `http://服务器IP:31888`。
+
+需要源码构建时，仓库根目录已提供 `Dockerfile` 和 `docker-compose.yml`：
 
 ```bash
 cp deploy/compose/.env.example deploy/compose/.env
@@ -48,7 +58,7 @@ docker compose -f deploy/compose/docker-compose.yml pull
 docker compose -f deploy/compose/docker-compose.yml up -d --no-build
 ```
 
-NAS 请使用 [`docker-compose.nas.yml`](docker-compose.nas.yml)，它不依赖仓库相对路径，使用命名卷，具体步骤见 [26 部署方式](../../docs/26-deployment.md#3-docker-预构建镜像--nas)。
+NAS 请使用 [`docker-compose.nas.yml`](docker-compose.nas.yml)，它不依赖仓库相对路径，使用命名卷，具体步骤见 [26 部署方式](../../docs/26-deployment.md)。
 
 ## 端口
 
@@ -93,6 +103,6 @@ git pull
 docker compose -f deploy/compose/docker-compose.yml up -d --build
 ```
 
-升级前先备份数据库和 `data/`；数据库迁移是向前执行的，回滚镜像不一定能回滚 schema。完整说明见 [26 部署方式](../../docs/26-deployment.md#12-更新已经运行的实例)。
+升级前先备份数据库和 `data/`；数据库迁移是向前执行的，回滚镜像不一定能回滚 schema。完整说明见 [26 部署方式](../../docs/26-deployment.md)。
 
 更多方式见 [26 部署方式](../../docs/26-deployment.md)。

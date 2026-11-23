@@ -32,7 +32,7 @@
 - [23 平台时间与下个任务倒计时](23-platform-clock.md)
 - [24 账号表单与活动资料](24-account-forms.md)
 - [25 应用注册状态与手动注册清单](25-registration-status.md)
-- [26 部署方式](26-deployment.md) — Docker、Windows、macOS、NAS、npm、systemd
+- [26 部署方式](26-deployment.md) — Windows、NAS/Docker 一键安装、macOS/Linux、npm
 
 ## 工程与开源
 

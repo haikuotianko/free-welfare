@@ -1,68 +1,21 @@
 (function () {
-  const EXE =
-    "https://github.com/haikuotianko/free-welfare/releases/download/v0.1.0/Free-Welfare-Setup-0.1.0.exe";
-
-  const recommendations = {
-    windows: {
-      os: "Windows",
-      title: "Windows 安装包",
-      desc: "下载 exe 后双击安装；自带 Node 22，首次启动自动下载内置 PostgreSQL，不需要 Docker。",
-      action: "下载 Windows 安装包",
-      href: EXE,
-      alt: "或查看 Docker / NAS 方式",
-      altHref: "#docker",
-      method: "windows",
-    },
-    macos: {
-      os: "macOS",
-      title: "macOS 双击启动",
-      desc: "需要 Node.js 22+。双击 deploy/macos/start.command，首次运行会自动安装依赖和内置 PostgreSQL。",
-      action: "查看 macOS 步骤",
-      href: "#macos",
-      alt: "或使用 Docker Compose",
-      altHref: "#docker",
-      method: "macos",
-    },
-    linux: {
-      os: "Linux",
-      title: "Linux 推荐 Docker Compose",
-      desc: "服务器推荐 Docker，一条命令带 PostgreSQL / API / Worker / Caddy；已有 Node 22 也可以用 Linux 原生脚本。",
-      action: "查看 Docker 步骤",
-      href: "#docker",
-      alt: "使用 Linux 原生脚本",
-      altHref: "#linux",
-      method: "docker",
-    },
-    android: {
-      os: "Android",
-      title: "手机 / 平板访问",
-      desc: "手机端不需要安装桌面程序；把平台部署到电脑或 NAS，再用手机浏览器访问。",
-      action: "查看 Docker / NAS 方式",
-      href: "#docker",
-      alt: "查看 NAS 方式",
-      altHref: "#nas",
-      method: "docker",
-    },
-    ios: {
-      os: "iPhone / iPad",
-      title: "手机 / 平板访问",
-      desc: "手机端不需要安装桌面程序；把平台部署到电脑或 NAS，再用手机浏览器访问。",
-      action: "查看 Docker / NAS 方式",
-      href: "#docker",
-      alt: "查看 NAS 方式",
-      altHref: "#nas",
-      method: "docker",
-    },
-    unknown: {
-      os: "当前设备",
-      title: "选择适合你的安装方式",
-      desc: "Windows 推荐安装包；macOS / Linux 可用脚本或 Docker；NAS 用 Docker Compose。",
-      action: "查看全部方式",
-      href: "#methods",
-      alt: "直接看 Docker",
-      altHref: "#docker",
-      method: "docker",
-    },
+  const tabs = Array.from(document.querySelectorAll("[data-deploy-tab]"));
+  const panels = Array.from(document.querySelectorAll("[data-deploy-panel]"));
+  const hint = document.getElementById("deploy-hint");
+  const labels = {
+    windows: "Windows",
+    docker: "NAS / Docker",
+    macos: "macOS",
+    linux: "Linux",
+    npm: "开发者",
+  };
+  const hashMap = {
+    windows: "windows",
+    docker: "docker",
+    nas: "docker",
+    macos: "macos",
+    linux: "linux",
+    npm: "npm",
   };
 
   function detectSystem() {
@@ -84,37 +37,98 @@
     return "unknown";
   }
 
-  function setText(id, text) {
-    const element = document.getElementById(id);
-    if (element) element.textContent = text;
+  const recommendedTab = {
+    windows: "windows",
+    macos: "macos",
+    linux: "docker",
+    android: "docker",
+    ios: "docker",
+    unknown: "docker",
+  };
+  const systemLabels = {
+    windows: "Windows",
+    macos: "macOS",
+    linux: "Linux",
+    android: "手机",
+    ios: "手机",
+    unknown: "当前设备",
+  };
+
+  function setHint(text) {
+    if (hint) hint.textContent = text;
   }
 
-  function applyRecommendation() {
-    const key = detectSystem();
-    const recommendation = recommendations[key] || recommendations.unknown;
+  function activate(key, options) {
+    const settings = options || {};
+    const nextTab = tabs.find((tab) => tab.dataset.deployTab === key) || tabs[0];
+    if (!nextTab) return;
+    const activeKey = nextTab.dataset.deployTab;
 
-    setText("reco-os", recommendation.os);
-    setText("reco-title", recommendation.title);
-    setText("reco-desc", recommendation.desc);
-
-    const action = document.getElementById("reco-action");
-    if (action) {
-      action.href = recommendation.href;
-      action.textContent = recommendation.action;
-    }
-
-    const alt = document.getElementById("reco-alt");
-    if (alt) {
-      alt.href = recommendation.altHref;
-      alt.textContent = recommendation.alt;
-    }
-
-    document.querySelectorAll(".method-card").forEach((card) => {
-      card.classList.toggle("is-recommended", card.dataset.method === recommendation.method);
+    tabs.forEach((tab) => {
+      const active = tab === nextTab;
+      tab.classList.toggle("is-active", active);
+      tab.setAttribute("aria-selected", String(active));
+      tab.tabIndex = active ? 0 : -1;
     });
 
-    document.documentElement.dataset.os = key;
+    panels.forEach((panel) => {
+      const active = panel.dataset.deployPanel === activeKey;
+      panel.classList.toggle("is-active", active);
+      panel.hidden = !active;
+    });
+
+    if (settings.focus) nextTab.focus();
+    return activeKey;
   }
+
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const key = activate(tab.dataset.deployTab);
+      if (key) {
+        history.replaceState(null, "", "#" + key);
+        setHint("已选择「" + labels[key] + "」，按步骤操作即可。");
+      }
+    });
+
+    tab.addEventListener("keydown", (event) => {
+      const current = tabs.indexOf(tab);
+      let next = null;
+      if (event.key === "ArrowRight") next = (current + 1) % tabs.length;
+      if (event.key === "ArrowLeft") next = (current - 1 + tabs.length) % tabs.length;
+      if (event.key === "Home") next = 0;
+      if (event.key === "End") next = tabs.length - 1;
+      if (next === null) return;
+      event.preventDefault();
+      const key = activate(tabs[next].dataset.deployTab, { focus: true });
+      if (key) {
+        history.replaceState(null, "", "#" + key);
+        setHint("已选择「" + labels[key] + "」，按步骤操作即可。");
+      }
+    });
+  });
+
+  function activateFromHash() {
+    const hash = location.hash.replace(/^#/, "");
+    const key = hashMap[hash];
+    if (!key) return false;
+    const activeKey = activate(key);
+    if (activeKey) setHint("已打开「" + labels[activeKey] + "」，按步骤操作即可。");
+    return true;
+  }
+
+  const system = detectSystem();
+  document.documentElement.dataset.os = system;
+  if (!activateFromHash()) {
+    const key = recommendedTab[system] || "docker";
+    activate(key);
+    if (system === "unknown") {
+      setHint("不确定选哪个？Windows 用安装包，NAS / 服务器用 Docker。");
+    } else {
+      setHint("检测到 " + (systemLabels[system] || system) + "，已为你选中「" + labels[key] + "」。也可以切换其他方式。");
+    }
+  }
+
+  window.addEventListener("hashchange", activateFromHash);
 
   async function copyText(text) {
     if (navigator.clipboard && window.isSecureContext) {
@@ -137,25 +151,20 @@
     if (!ok) throw new Error("copy failed");
   }
 
-  function bindCopyButtons() {
-    document.querySelectorAll("[data-copy-target]").forEach((button) => {
-      button.addEventListener("click", async () => {
-        const target = document.getElementById(button.dataset.copyTarget);
-        if (!target) return;
-        const original = button.textContent;
-        try {
-          await copyText(target.textContent.trim());
-          button.textContent = "已复制";
-        } catch {
-          button.textContent = "复制失败";
-        }
-        window.setTimeout(() => {
-          button.textContent = original;
-        }, 1600);
-      });
+  document.querySelectorAll("[data-copy-target]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const target = document.getElementById(button.dataset.copyTarget);
+      if (!target) return;
+      const original = button.textContent;
+      try {
+        await copyText(target.textContent.trim());
+        button.textContent = "已复制";
+      } catch {
+        button.textContent = "复制失败";
+      }
+      window.setTimeout(() => {
+        button.textContent = original;
+      }, 1600);
     });
-  }
-
-  applyRecommendation();
-  bindCopyButtons();
+  });
 })();
