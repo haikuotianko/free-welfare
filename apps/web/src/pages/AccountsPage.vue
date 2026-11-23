@@ -981,7 +981,26 @@ onUnmounted(() => {
             <span class="text-[11px] text-slate-500">成功 {{ accountDoneCount(selectedAccount) }}</span>
             <span class="text-[11px] text-slate-500">偏移 {{ offsetLabel(selectedAccount) }}</span>
           </div>
-          <div class="flex flex-wrap gap-1.5">
+          <div class="flex flex-1 flex-wrap items-center justify-end gap-1.5">
+            <div v-if="selectedAccount.siteAccounts.length > 0" class="relative min-w-[180px] flex-1 sm:max-w-xs">
+              <Search class="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+              <input
+                :value="appQueryOf(selectedAccount.id)"
+                type="text"
+                class="input !py-1.5 !pl-8 !pr-8 text-xs"
+                placeholder="搜索应用名称、key、AppID"
+                @input="setAppQueryFromEvent(selectedAccount.id, $event)"
+              />
+              <button
+                v-if="appQueryOf(selectedAccount.id)"
+                type="button"
+                class="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 transition hover:text-slate-600 dark:hover:text-slate-200"
+                title="清空搜索"
+                @click="setAppQuery(selectedAccount.id, '')"
+              >
+                <X class="h-3.5 w-3.5" />
+              </button>
+            </div>
             <button
               v-if="accountStore.selectedId !== selectedAccount.id"
               type="button"
@@ -1001,47 +1020,27 @@ onUnmounted(() => {
             未订阅应用。点击上方「管理订阅应用」从应用库添加，或到应用详情绑定。
           </div>
           <div v-else class="space-y-2">
-          <div class="flex flex-wrap items-center gap-2">
-            <div class="relative min-w-56 flex-1 sm:max-w-xs">
-              <Search class="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-              <input
-                :value="appQueryOf(account.id)"
-                type="text"
-                class="input !py-1.5 !pl-8 !pr-8 text-xs"
-                placeholder="搜索应用名称、key、AppID"
-                @input="setAppQueryFromEvent(account.id, $event)"
-              />
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex flex-wrap items-center gap-1.5">
               <button
-                v-if="appQueryOf(account.id)"
+                v-for="tab in APP_FILTERS"
+                :key="tab.key"
                 type="button"
-                class="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 transition hover:text-slate-600 dark:hover:text-slate-200"
-                title="清空搜索"
-                @click="setAppQuery(account.id, '')"
+                class="rounded-full border px-2.5 py-1 text-[11px] transition"
+                :class="
+                  appFilterOf(account.id) === tab.key
+                    ? 'border-brand-600 bg-brand-600 text-white'
+                    : 'border-slate-200 bg-white text-slate-600 hover:border-brand-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'
+                "
+                @click="setAppFilter(account.id, tab.key)"
               >
-                <X class="h-3.5 w-3.5" />
+                {{ tab.label }}
+                <span class="ml-0.5 opacity-80">{{ appCount(account, tab.key) }}</span>
               </button>
             </div>
             <span class="text-[11px] text-slate-400">
               显示 {{ pagedApps(account).length }} / {{ filteredApps(account).length }}
             </span>
-          </div>
-
-          <div class="flex flex-wrap items-center gap-1.5">
-            <button
-              v-for="tab in APP_FILTERS"
-              :key="tab.key"
-              type="button"
-              class="rounded-full border px-2.5 py-1 text-[11px] transition"
-              :class="
-                appFilterOf(account.id) === tab.key
-                  ? 'border-brand-600 bg-brand-600 text-white'
-                  : 'border-slate-200 bg-white text-slate-600 hover:border-brand-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'
-              "
-              @click="setAppFilter(account.id, tab.key)"
-            >
-              {{ tab.label }}
-              <span class="ml-0.5 opacity-80">{{ appCount(account, tab.key) }}</span>
-            </button>
           </div>
 
           <div
