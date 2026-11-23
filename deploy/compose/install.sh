@@ -95,6 +95,7 @@ if ! docker network inspect "$network" >/dev/null 2>&1; then
 fi
 
 echo "拉取并启动 Free Welfare ..."
+docker compose -f "$COMPOSE_FILE" pull api worker
 docker compose -f "$COMPOSE_FILE" up -d --no-build
 docker compose -f "$COMPOSE_FILE" ps
 

@@ -73,6 +73,8 @@ YYB_DOCKER_NETWORK=qinglong_default bash install.sh
 
 NAS 提示权限不足时使用 `sudo bash install.sh`。
 
+> 如果手动执行 Compose 报 `env file .../.env not found`，说明当前目录没有 `.env`。运行上面的 `install.sh` 会自动生成；手动部署请先从 `.env.example` 复制一份 `.env`，再启动。
+
 端口冲突时编辑 `.env`：
 
 ```ini
@@ -149,6 +151,7 @@ docker compose -f docker-compose.nas.yml exec api node -e "fetch('http://yyb-go:
 新建目录并保存为 `docker-compose.yml`，同目录放 `.env`：
 
 ```yaml
+# 同目录先准备 .env；运行 install.sh 会自动生成
 services:
   postgres:
     image: postgres:16-alpine
@@ -216,6 +219,7 @@ networks:
 
 ```bash
 docker network inspect yyb-go >/dev/null 2>&1 || docker network create yyb-go
+docker pull ghcr.io/haikuotianko/free-welfare:latest
 docker compose -f docker-compose.yml up -d --no-build
 ```
 
@@ -344,6 +348,7 @@ docker exec -t <postgres容器> pg_dump -U welfare welfare > backup-$(date +%F).
 ## 6. 常见问题
 
 - **启动报 `network yyb-go declared as external, but could not be found`**：先执行 `docker network create yyb-go`，或把 `YYB_DOCKER_NETWORK` 改成 YYB 实际网络名。
+- **启动报 `env file .../.env not found`**：当前目录缺少 `.env`。运行 `install.sh` 自动生成，或下载 `.env.example` 改名为 `.env` 并填写数据库密码和密钥。
 - **YYB 不可用**：平台仍可启动；在设置页或 `.env` 填写 YYB 地址和 token，并确认容器在同一网络。
 - **拉取镜像慢**：GHCR 国际线路可能较慢；可在网络更好的电脑上 `docker pull` 后 `docker save`，再复制到 NAS `docker load`。
 - **Windows 提示未知发布者**：安装包未签名，选择“仍要运行”。

@@ -251,6 +251,13 @@ bash install.sh</code></pre>
               <a class="link" href="https://github.com/haikuotianko/free-welfare/pkgs/container/free-welfare">GHCR 镜像</a>
             </div>
             <p class="code-caption">NAS 提示权限不足时使用 <code>sudo bash install.sh</code>；YYB 已在默认网络时使用 <code>YYB_DOCKER_NETWORK=qinglong_default bash install.sh</code>。</p>
+            <p class="deploy-warning"><b>报错 <code>env file .../.env not found</code>？</b> 当前目录缺少 <code>.env</code>。运行上面的 <code>install.sh</code> 会自动生成；手动 Compose 请先下载 <a class="link" href="https://raw.githubusercontent.com/haikuotianko/free-welfare/main/deploy/compose/.env.example">.env.example</a> 并改名为 <code>.env</code>，再启动。</p>
+            <p class="code-caption">已经准备好 <code>.env</code> 时，使用预构建镜像：</p>
+            <div class="code-wrap">
+              <pre class="code" id="docker-pull-code"><code>docker pull ghcr.io/haikuotianko/free-welfare:latest
+docker compose -f docker-compose.nas.yml up -d --no-build</code></pre>
+              <button type="button" class="copy-btn" data-copy-target="docker-pull-code">复制</button>
+            </div>
             <details class="method-notes">
               <summary>群晖 / 威联通 / 飞牛 / TrueNAS / Unraid / 极空间 / 绿联</summary>
               <p>这些 NAS 都可以使用 Docker Compose。图形界面入口：</p>
@@ -268,7 +275,8 @@ bash install.sh</code></pre>
               <summary>复制 docker-compose.yml（手动部署）</summary>
               <p>新建目录并保存为 <code>docker-compose.yml</code>，再准备同目录的 <code>.env</code>。可下载 <a class="link" href="https://raw.githubusercontent.com/haikuotianko/free-welfare/main/deploy/compose/.env.example">.env.example</a> 后修改。</p>
               <div class="code-wrap">
-                <pre class="code" id="nas-compose-code"><code>services:
+                <pre class="code" id="nas-compose-code"><code># 同目录先准备 .env；运行 install.sh 会自动生成
+services:
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
