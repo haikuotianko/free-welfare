@@ -4,9 +4,8 @@ import { useRoute } from 'vue-router';
 import {
   Ban,
   CheckCircle2,
-  ChevronDown,
-  ChevronUp,
   KeyRound,
+  ListPlus,
   PlayCircle,
   Plus,
   QrCode,
@@ -35,6 +34,7 @@ import { runActionDetails } from '../lib/run-actions';
 import { useAccountStore } from '../stores/account';
 import { useClock } from '../stores/clock';
 import ActionFormModal from '../components/ActionFormModal.vue';
+import AppSubscribeModal from '../components/AppSubscribeModal.vue';
 import Pagination from '../components/Pagination.vue';
 
 type SiteAccountItem = AccountOverview['siteAccounts'][number];
@@ -55,11 +55,12 @@ const clock = useClock();
 const error = ref('');
 const message = ref('');
 const loading = ref(false);
-const userFilter = ref(accountStore.selectedId);
+const selectedAccountId = ref(accountStore.selectedId);
 const sites = ref<Site[]>([]);
 const templates = ref<FormTemplate[]>([]);
-const addSite = reactive<Record<string, string>>({});
-const collapsed = reactive<Record<string, boolean>>({});
+const subscribeOpen = ref(false);
+const subscribeAccountId = ref('');
+const subscribeSaving = ref(false);
 
 const runOpen = ref(false);
 const runLoading = ref(false);
@@ -97,10 +98,28 @@ const formValues = reactive<Record<string, Record<string, string>>>({});
 const addTemplateId = ref('');
 const formsSaving = ref(false);
 
-const visibleAccounts = computed(() =>
-  userFilter.value
-    ? accountStore.accounts.filter((account) => account.id === userFilter.value)
-    : accountStore.accounts,
+const selectedAccount = computed(
+  () =>
+    accountStore.accounts.find((account) => account.id === selectedAccountId.value) ??
+    accountStore.accounts[0] ??
+    null,
+);
+
+const selectedAccounts = computed(() => (selectedAccount.value ? [selectedAccount.value] : []));
+
+const subscribeAccount = computed(
+  () => accountStore.accounts.find((account) => account.id === subscribeAccountId.value) ?? null,
+);
+
+const subscribeAvailable = computed(() => {
+  const account = subscribeAccount.value;
+  if (!account) return [];
+  const bound = new Set(account.siteAccounts.map((item) => item.siteId));
+  return sites.value.filter((site) => !bound.has(site.id));
+});
+
+const subscribeSubscribed = computed(() =>
+  (subscribeAccount.value?.siteAccounts ?? []).map((item) => item.site),
 );
 
 const formsAccount = computed(
@@ -125,8 +144,8 @@ async function load() {
     sites.value = siteList;
     templates.value = templateList;
     await accountStore.load();
-    if (userFilter.value && !accountStore.accounts.some((account) => account.id === userFilter.value)) {
-      userFilter.value = '';
+    if (!accountStore.accounts.some((account) => account.id === selectedAccountId.value)) {
+      selectedAccountId.value = accountStore.accounts[0]?.id ?? '';
     }
     const formAccount = typeof route.query.forms === 'string' ? route.query.forms : '';
     if (formAccount && accountStore.accounts.some((account) => account.id === formAccount)) {
@@ -315,8 +334,21 @@ function formatTime(value?: string | null) {
   return new Date(value).toLocaleString('zh-CN', { hour12: false });
 }
 
-function toggleCollapsed(accountId: string) {
-  collapsed[accountId] = !collapsed[accountId];
+function selectAccountCard(accountId: string) {
+  selectedAccountId.value = accountId;
+}
+
+function setCurrent(account: AccountOverview) {
+  accountStore.select(account.id);
+  selectedAccountId.value = account.id;
+}
+
+function accountDoneCount(account: AccountOverview) {
+  return account.siteAccounts.filter((item) => item.signIn.status === 'done').length;
+}
+
+function offsetLabel(account: AccountOverview) {
+  return account.timeOffsetMinutes > 0 ? `+${account.timeOffsetMinutes} 分钟` : '0 分钟';
 }
 
 function appFilterOf(accountId: string): AppFilter {
@@ -559,38 +591,51 @@ async function toggleAppDisabled(siteAccount: SiteAccountItem) {
   }
 }
 
-function availableSites(account: AccountOverview) {
-  const bound = new Set(account.siteAccounts.map((item) => item.siteId));
-  return sites.value.filter((site) => !bound.has(site.id));
-}
-
-async function subscribe(account: AccountOverview) {
-  const siteId = addSite[account.id];
-  if (!siteId) return;
+function openSubscribe(account: AccountOverview) {
+  subscribeAccountId.value = account.id;
+  subscribeOpen.value = true;
   error.value = '';
   message.value = '';
-  try {
-    await api.post(`/sites/${siteId}/accounts`, { wechatAccountId: account.id });
-    addSite[account.id] = '';
-    await accountStore.load();
-    message.value = '已添加订阅';
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : '添加订阅失败';
-  }
 }
 
-async function unsubscribe(account: AccountOverview, siteId: string, siteName: string) {
-  const siteAccount = account.siteAccounts.find((item) => item.siteId === siteId);
-  if (!siteAccount) return;
-  if (!window.confirm(`取消订阅「${siteName}」？不会删除应用，只会解绑这个账号。`)) return;
+async function saveSubscriptions(payload: { addSiteIds: string[]; removeSiteIds: string[] }) {
+  const account = subscribeAccount.value;
+  if (!account) return;
+  subscribeSaving.value = true;
   error.value = '';
   message.value = '';
+  let failed = 0;
+  let lastError = '';
   try {
-    await api.del(`/sites/${siteId}/accounts/${siteAccount.id}`);
+    for (const siteId of payload.removeSiteIds) {
+      const binding = account.siteAccounts.find((item) => item.siteId === siteId);
+      if (!binding) continue;
+      try {
+        await api.del(`/sites/${siteId}/accounts/${binding.id}`);
+      } catch (e) {
+        failed += 1;
+        lastError = e instanceof Error ? e.message : '移除失败';
+      }
+    }
+    for (const siteId of payload.addSiteIds) {
+      try {
+        await api.post(`/sites/${siteId}/accounts`, { wechatAccountId: account.id });
+      } catch (e) {
+        failed += 1;
+        lastError = e instanceof Error ? e.message : '添加失败';
+      }
+    }
     await accountStore.load();
-    message.value = '已取消订阅';
+    subscribeOpen.value = false;
+    if (failed > 0) {
+      error.value = `订阅已部分更新，${failed} 个操作失败${lastError ? `：${lastError}` : ''}`;
+    } else {
+      message.value = `「${account.displayName}」的订阅应用已更新`;
+    }
   } catch (e) {
-    error.value = e instanceof Error ? e.message : '取消订阅失败';
+    error.value = e instanceof Error ? e.message : '更新订阅失败';
+  } finally {
+    subscribeSaving.value = false;
   }
 }
 
@@ -837,12 +882,6 @@ onUnmounted(() => {
         </p>
       </div>
       <div class="flex flex-wrap items-center gap-2">
-        <select v-model="userFilter" class="input !w-auto !py-1.5 text-xs">
-          <option value="">全部用户</option>
-          <option v-for="account in accountStore.accounts" :key="account.id" :value="account.id">
-            {{ account.displayName }}
-          </option>
-        </select>
         <RouterLink to="/forms" class="btn-ghost !px-3 !py-1.5">表单配置</RouterLink>
         <button class="btn-ghost !px-3 !py-1.5" :disabled="qrLoading" @click="startQr">
           <QrCode class="h-4 w-4" /> 扫码添加账号
@@ -865,66 +904,101 @@ onUnmounted(() => {
       </p>
     </div>
 
-    <div v-else class="space-y-4">
-      <div
-        v-for="account in visibleAccounts"
-        :key="account.id"
-        class="card space-y-3"
-        :class="accountStore.selectedId === account.id ? 'ring-2 ring-brand-400 dark:ring-brand-700' : ''"
-      >
-        <div class="flex flex-wrap items-start justify-between gap-2">
-          <div class="min-w-0">
-            <div class="flex flex-wrap items-center gap-2">
-              <span class="truncate font-medium">{{ account.displayName }}</span>
-              <span v-if="account.status === 'alive'" class="chip" :class="statusClass(account.status)">
-                {{ labelOf(accountStatusLabels, account.status) }}
-              </span>
-              <button
-                v-else
-                type="button"
-                class="chip cursor-pointer transition hover:opacity-80"
-                :class="statusClass(account.status)"
-                :disabled="refreshingAccount === account.id"
-                title="账号当前不可用，点击刷新状态"
-                @click="refresh(account)"
+    <template v-else>
+      <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <article
+          v-for="account in accountStore.accounts"
+          :key="account.id"
+          class="card cursor-pointer space-y-2 !p-3 transition hover:border-brand-300 dark:hover:border-brand-700"
+          :class="selectedAccount?.id === account.id ? 'ring-2 ring-brand-400 dark:ring-brand-700' : ''"
+          role="button"
+          tabindex="0"
+          @click="selectAccountCard(account.id)"
+          @keydown.enter="selectAccountCard(account.id)"
+          @keydown.space.prevent="selectAccountCard(account.id)"
+        >
+          <div class="flex flex-wrap items-start justify-between gap-2">
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-1.5">
+                <span class="truncate text-sm font-semibold">{{ account.displayName }}</span>
+                <span v-if="accountStore.selectedId === account.id" class="chip bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-100">
+                  <CheckCircle2 class="mr-1 h-3 w-3" /> 当前账号
+                </span>
+                <span v-else-if="selectedAccount?.id === account.id" class="chip bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                  查看中
+                </span>
+              </div>
+              <div
+                class="mt-0.5 truncate text-[11px] text-slate-500"
+                :title="`YYB #${account.yybRef} · ${account.scanProduct ?? '未知渠道'} · OpenID：${account.openidMasked ?? '—'}`"
               >
-                <RefreshCw class="mr-1 h-3 w-3" :class="{ 'animate-spin': refreshingAccount === account.id }" />
-                {{ labelOf(accountStatusLabels, account.status) }}
-              </button>
-              <span v-if="accountStore.selectedId === account.id" class="chip bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-100">
-                <CheckCircle2 class="mr-1 h-3 w-3" /> 当前账号
-              </span>
+                YYB #{{ account.yybRef }} · {{ account.scanProduct ?? '未知渠道' }} · OpenID：{{ account.openidMasked ?? '—' }}
+              </div>
             </div>
-            <div class="mt-1 text-xs text-slate-500">
-              YYB #{{ account.yybRef }} · {{ account.scanProduct ?? '未知渠道' }} · OpenID：{{ account.openidMasked ?? '—' }}
-            </div>
+            <span v-if="account.status === 'alive'" class="chip" :class="statusClass(account.status)">
+              {{ labelOf(accountStatusLabels, account.status) }}
+            </span>
+            <button
+              v-else
+              type="button"
+              class="chip cursor-pointer transition hover:opacity-80"
+              :class="statusClass(account.status)"
+              :disabled="refreshingAccount === account.id"
+              title="账号当前不可用，点击刷新状态"
+              @click.stop="refresh(account)"
+            >
+              <RefreshCw class="mr-1 h-3 w-3" :class="{ 'animate-spin': refreshingAccount === account.id }" />
+              {{ labelOf(accountStatusLabels, account.status) }}
+            </button>
           </div>
-          <div class="flex flex-wrap gap-2">
+          <div class="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-slate-500">
+            <span>应用 <b class="text-slate-700 dark:text-slate-200">{{ account.siteAccounts.length }}</b></span>
+            <span>今日成功 <b class="text-emerald-600 dark:text-emerald-300">{{ accountDoneCount(account) }}</b></span>
+            <span>偏移 <b class="text-slate-700 dark:text-slate-200">{{ offsetLabel(account) }}</b></span>
+            <span>表单 <b class="text-slate-700 dark:text-slate-200">{{ account.accountForms.length }}</b></span>
+          </div>
+          <div class="flex flex-wrap gap-1.5">
             <button
               v-if="accountStore.selectedId !== account.id"
-              class="btn-ghost !px-3 !py-1.5"
-              @click="accountStore.select(account.id)"
+              type="button"
+              class="btn-ghost !px-2 !py-1 text-[11px]"
+              @click.stop="setCurrent(account)"
             >
               设为当前
             </button>
-            <button class="btn-ghost !px-3 !py-1.5" @click="toggleCollapsed(account.id)">
-              <ChevronUp v-if="!collapsed[account.id]" class="h-4 w-4" />
-              <ChevronDown v-else class="h-4 w-4" />
-              {{ collapsed[account.id] ? '展开应用' : '收起应用' }}
+            <button type="button" class="btn-ghost !px-2 !py-1 text-[11px]" title="账号配置、执行偏移和表单资料" @click.stop="openForms(account)">
+              <Settings class="h-3.5 w-3.5" /> 配置
             </button>
+          </div>
+        </article>
+      </div>
+
+      <div v-if="selectedAccount" class="card space-y-2 !p-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
+            <h3 class="truncate text-sm font-semibold">{{ selectedAccount.displayName }} 的应用</h3>
+            <span class="text-[11px] text-slate-500">应用 {{ selectedAccount.siteAccounts.length }}</span>
+            <span class="text-[11px] text-slate-500">成功 {{ accountDoneCount(selectedAccount) }}</span>
+            <span class="text-[11px] text-slate-500">偏移 {{ offsetLabel(selectedAccount) }}</span>
+          </div>
+          <div class="flex flex-wrap gap-1.5">
             <button
-              class="btn-ghost !px-3 !py-1.5"
-              title="账号配置、执行偏移和表单资料"
-              @click="openForms(account)"
+              v-if="accountStore.selectedId !== selectedAccount.id"
+              type="button"
+              class="btn-ghost !px-2 !py-1 text-[11px]"
+              @click="setCurrent(selectedAccount)"
             >
-              <Settings class="h-4 w-4" /> 配置
+              设为当前
+            </button>
+            <button type="button" class="btn-primary !px-2 !py-1 text-[11px]" @click="openSubscribe(selectedAccount)">
+              <ListPlus class="h-3.5 w-3.5" /> 管理订阅
             </button>
           </div>
         </div>
+        <div v-for="account in selectedAccounts" :key="account.id" class="space-y-3">
 
-        <div v-show="!collapsed[account.id]" class="space-y-3">
           <div v-if="account.siteAccounts.length === 0" class="rounded-xl border border-dashed border-slate-300 p-3 text-xs text-slate-500 dark:border-slate-700">
-            未订阅应用。可以在下面添加订阅，或到应用详情绑定。
+            未订阅应用。点击上方「管理订阅应用」从应用库添加，或到应用详情绑定。
           </div>
           <div v-else class="space-y-2">
           <div class="flex flex-wrap items-center gap-2">
@@ -1099,14 +1173,6 @@ onUnmounted(() => {
                     <Ban v-else class="h-3.5 w-3.5" />
                     <span class="hidden sm:inline">{{ siteAccount.disabled ? '启用' : '禁用' }}</span>
                   </button>
-                  <button
-                    class="btn-ghost !px-2 !py-1 text-xs text-red-600 dark:text-red-300"
-                    title="取消订阅"
-                    aria-label="取消订阅应用"
-                    @click="unsubscribe(account, siteAccount.siteId, siteAccount.site.name)"
-                  >
-                    <Trash2 class="h-4 w-4" />
-                  </button>
                 </div>
               </div>
             </div>
@@ -1184,24 +1250,9 @@ onUnmounted(() => {
             @update:page="setAppPage(account.id, $event)"
           />
           </div>
-
-          <div class="flex flex-wrap items-end gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
-            <div class="min-w-48 flex-1">
-              <label class="label">添加订阅应用</label>
-              <select v-model="addSite[account.id]" class="input">
-                <option value="">选择应用</option>
-                <option v-for="site in availableSites(account)" :key="site.id" :value="site.id">
-                  {{ site.name }}
-                </option>
-              </select>
-            </div>
-            <button class="btn-primary !px-3 !py-1.5" :disabled="!addSite[account.id]" @click="subscribe(account)">
-              <Plus class="h-4 w-4" /> 订阅
-            </button>
-          </div>
         </div>
       </div>
-    </div>
+    </template>
 
     <!-- YYB 扫码添加账号弹窗 -->
     <div
@@ -1418,6 +1469,16 @@ onUnmounted(() => {
       :submitting="registeringRunId === registrationRunId && Boolean(registeringRunId)"
       @close="registrationModalOpen = false"
       @submit="submitRegistrationForm"
+    />
+
+    <AppSubscribeModal
+      v-if="subscribeOpen"
+      :account-name="subscribeAccount?.displayName ?? ''"
+      :available="subscribeAvailable"
+      :subscribed="subscribeSubscribed"
+      :saving="subscribeSaving"
+      @close="subscribeOpen = false"
+      @save="saveSubscriptions"
     />
   </div>
 </template>

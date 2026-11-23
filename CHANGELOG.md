@@ -6,6 +6,7 @@
 
 - 官网新增「下载与安装」专区：自动识别当前系统并推荐 Windows 安装包、macOS 脚本、Linux/Docker/NAS 或 npm；提供安装包/源码/Compose/镜像下载入口、SHA-256 校验、逐步命令、复制按钮、方式对比和常见问题。
 - 部署更新更稳：Docker Compose 的 Worker 现在会等 API 健康（迁移完成）后再启动；新增 `deploy/compose/update.sh`，并补充 NAS 生产实例与本地开发实例并行、数据库/数据目录/微信账号隔离和升级回滚说明。
+- 账号页改为顶部账号卡片：显示账号状态、YYB/OpenID、应用数、今日成功、执行偏移和表单数，点击卡片切换下方应用内容，默认选中第一个；添加/移除订阅应用改为可搜索的双栏穿梭弹窗，支持批量勾选和保存差异。
 - Docker / NAS 默认宿主机 API 端口从 `3000` 改为不常用的 `31888`，容器内部仍监听 `3000`；端口冲突时可在 `.env` 覆盖 `API_HOST_PORT`。
 - 新增多种部署方式：Docker Compose、GHCR 预构建镜像（amd64/arm64）、NAS 专用 Compose、Windows 安装包/脚本、macOS 双击启动、Linux systemd，以及 npm 手动安装；原生方式内置 PostgreSQL，不再要求单独安装数据库。安装包自带 Node.js 运行时，首次启动联网安装依赖并构建，输出在 `release/windows/Free-Welfare-Setup-<版本>.exe`。
 - 新增 `20261121100000_schema_drift` 迁移，补齐 `Run.notBefore`、`Site.registrationMode/registrationNote/runTimeoutMinutes`、`SiteAccount.disabled`、`WechatAccount.timeOffsetMinutes` 和缺失索引；修复全新数据库执行迁移后 Worker 报 `column Run.notBefore does not exist` 的问题。
