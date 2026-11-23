@@ -46,27 +46,27 @@ powershell -ExecutionPolicy Bypass -File deploy\windows\build-installer.ps1
 
 ## 2. NAS / Docker（推荐，无需控制台）
 
-使用 GHCR 预构建镜像，不在 NAS 上编译。新版 Compose **不需要 `.env` 文件**，配置全部从环境变量读取，可以直接粘贴到 NAS 的 Compose 项目。
+使用 GHCR 预构建镜像，不在 NAS 上编译。新版 Compose **不需要 `.env` 文件**，配置从环境变量读取；`APP_ENCRYPTION_KEY` 和 `AUTH_SESSION_SECRET` 首次启动会自动生成并保存到 `data/secrets.env`，不需要部署前准备。
 
 ### 图形界面安装
 
 1. 在 NAS 的 Docker / Compose 入口新建项目（入口见下方）。
 2. 下载或复制下面的 `docker-compose.nas.yml`，粘贴到项目编辑器。
-3. 在 NAS 的环境变量输入框填写密钥、密码和访问地址。
+3. 可以直接启动；需要时再填写端口、数据库密码或 YYB 配置。
 4. 启动，访问 `http://NAS地址:31888`，创建管理员。
 
 | 环境变量 | 必填 | 说明 |
 | --- | --- | --- |
-| `APP_ENCRYPTION_KEY` | 是 | 32 字节 base64；`openssl rand -base64 32` |
-| `AUTH_SESSION_SECRET` | 是 | 32 字节 base64；`openssl rand -base64 32` |
-| `POSTGRES_PASSWORD` | 建议 | 数据库密码，默认 `welfare` |
-| `APP_URL` | 建议 | `http://NAS地址:31888` |
+| `APP_ENCRYPTION_KEY` | 否 | 不填自动生成并持久化；也可手动指定 32 字节 base64 |
+| `AUTH_SESSION_SECRET` | 否 | 不填自动生成并持久化；也可手动指定 32 字节 base64 |
+| `POSTGRES_PASSWORD` | 否 | 数据库密码，默认 `welfare`，建议修改 |
+| `APP_URL` | 否 | `http://NAS地址:31888`，用于生成正确链接 |
 | `YYB_DOCKER_NETWORK` | 否 | 默认 `qinglong_default`；YYB 使用自定义网络时修改 |
-| `YYB_BASE_URL` | 否 | 默认 `http://yyb-go:8000` |
+| `YYB_BASE_URL` | 否 | 默认 `http://yyb-go:8000`，也可启动后在设置页填写 |
 | `YYB_INTEGRATION_TOKEN` | 否 | YYB 集成令牌，也可启动后在设置页填写 |
 | `API_HOST_PORT` | 否 | 宿主机端口，默认 `31888` |
 
-> 没有终端生成密钥时，可以在官网 NAS / Docker 页点击「生成两个随机密钥」，或使用任意 32 字节 base64 随机值。
+> 第一次启动不需要填写密钥。如需手动指定，可以在官网 NAS / Docker 页点击「生成两个随机密钥」，或使用 `openssl rand -base64 32`。
 
 <details>
 <summary>复制 docker-compose.yml（环境变量版）</summary>
@@ -75,10 +75,9 @@ powershell -ExecutionPolicy Bypass -File deploy\windows\build-installer.ps1
 # NAS / Docker Compose（预构建镜像，不需要 .env 文件）
 # 所有配置从环境变量读取；可在 NAS 的 Compose UI 里填写，或使用同目录 .env。
 #
-# 必填环境变量：
-#   APP_ENCRYPTION_KEY      openssl rand -base64 32
-#   AUTH_SESSION_SECRET     openssl rand -base64 32
 # 可选环境变量：
+#   APP_ENCRYPTION_KEY / AUTH_SESSION_SECRET
+#     不填会自动生成并持久化到 /data/secrets.env，无需部署前准备
 #   POSTGRES_PASSWORD       默认 welfare，建议修改
 #   DATABASE_URL            默认自动拼接 postgres 地址
 #   APP_URL                 默认 http://localhost:31888
@@ -92,8 +91,8 @@ x-app-environment: &app-environment
   LOG_LEVEL: ${LOG_LEVEL:-info}
   APP_PORT: '3000'
   APP_URL: ${APP_URL:-http://localhost:31888}
-  APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:?APP_ENCRYPTION_KEY is required}
-  AUTH_SESSION_SECRET: ${AUTH_SESSION_SECRET:?AUTH_SESSION_SECRET is required}
+  APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:-}
+  AUTH_SESSION_SECRET: ${AUTH_SESSION_SECRET:-}
   DATABASE_URL: ${DATABASE_URL:-postgresql://welfare:${POSTGRES_PASSWORD:-welfare}@postgres:5432/welfare?schema=public}
   YYB_BASE_URL: ${YYB_BASE_URL:-http://yyb-go:8000}
   YYB_INTEGRATION_TOKEN: ${YYB_INTEGRATION_TOKEN:-}
@@ -132,7 +131,7 @@ services:
     restart: unless-stopped
     environment:
       <<: *app-environment
-    command: sh -c "node tools/migrate.mjs && node apps/api/dist/main.js"
+    command: sh -c "node --import ./tools/ensure-secrets.mjs tools/migrate.mjs && node --import ./tools/ensure-secrets.mjs apps/api/dist/main.js"
     ports:
       - '${API_HOST_PORT:-31888}:3000'
     volumes:
@@ -154,7 +153,7 @@ services:
     restart: unless-stopped
     environment:
       <<: *app-environment
-    command: node apps/worker/dist/main.js
+    command: node --import ./tools/ensure-secrets.mjs apps/worker/dist/main.js
     volumes:
       - fw-data:/data
     networks:

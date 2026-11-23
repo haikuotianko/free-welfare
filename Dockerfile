@@ -54,6 +54,7 @@ COPY --from=build /app/packages/shared/dist packages/shared/dist
 COPY --from=build /app/packages/domain/dist packages/domain/dist
 COPY --from=build /app/packages/sdk/dist packages/sdk/dist
 COPY --from=build /app/tools/migrate.mjs tools/migrate.mjs
+COPY --from=build /app/tools/ensure-secrets.mjs tools/ensure-secrets.mjs
 
 EXPOSE 3000
-CMD ["node", "apps/api/dist/main.js"]
+CMD ["sh", "-c", "node --import ./tools/ensure-secrets.mjs apps/api/dist/main.js"]

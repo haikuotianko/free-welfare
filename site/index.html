@@ -237,15 +237,15 @@ YYB_BASE_URL=http://yyb-go:8000</code></pre>
   </div>
   <ol class="steps">
     <li>下载 <code>docker-compose.nas.yml</code>，或在 NAS 的 Compose 项目里新建并粘贴内容。</li>
-    <li>在 NAS 的环境变量输入框填写密钥和密码；必填项见下方。</li>
+    <li>可以直接启动；密钥会自动生成。需要时再填写数据库密码、访问地址或 YYB 配置。</li>
     <li>启动后打开 <code>http://NAS地址:31888</code>，创建管理员。</li>
   </ol>
   <div class="method-actions">
     <a class="button primary sm" href="https://raw.githubusercontent.com/haikuotianko/free-welfare/main/deploy/compose/docker-compose.nas.yml">下载 Compose 文件</a>
     <a class="link" href="#nas-compose-details">查看 / 复制内容</a>
   </div>
-  <p class="code-caption">必填环境变量：<code>APP_ENCRYPTION_KEY</code>、<code>AUTH_SESSION_SECRET</code>；建议同时设置 <code>POSTGRES_PASSWORD</code>、<code>APP_URL</code>、<code>YYB_DOCKER_NETWORK</code>。</p>
-  <p class="deploy-warning"><b>新版 Compose 不再要求 <code>.env</code> 文件。</b> 如果旧版报 <code>env file .../.env not found</code>，请直接使用下面的环境变量版 Compose；只有一键脚本或手动 <code>.env</code> 方式才需要 <code>.env</code>。</p>
+  <p class="code-caption">无需先填密钥：首次启动会自动生成并保存到 <code>data/secrets.env</code>。可选设置 <code>POSTGRES_PASSWORD</code>、<code>APP_URL</code>、<code>YYB_DOCKER_NETWORK</code>；YYB 地址和 token 也可以启动后在设置页填写。</p>
+  <p class="deploy-warning"><b>新版 Compose 不再要求 <code>.env</code>，也不要求预先填写密钥。</b> 如果旧版报 <code>env file .../.env not found</code> 或 <code>APP_ENCRYPTION_KEY is required</code>，请直接使用下面的新版 Compose。</p>
 
   <details class="method-notes" id="nas-compose-details">
     <summary>复制 docker-compose.yml（环境变量版）</summary>
@@ -254,10 +254,9 @@ YYB_BASE_URL=http://yyb-go:8000</code></pre>
       <pre class="code" id="nas-compose-code"><code># NAS / Docker Compose（预构建镜像，不需要 .env 文件）
 # 所有配置从环境变量读取；可在 NAS 的 Compose UI 里填写，或使用同目录 .env。
 #
-# 必填环境变量：
-#   APP_ENCRYPTION_KEY      openssl rand -base64 32
-#   AUTH_SESSION_SECRET     openssl rand -base64 32
 # 可选环境变量：
+#   APP_ENCRYPTION_KEY / AUTH_SESSION_SECRET
+#     不填会自动生成并持久化到 /data/secrets.env，无需部署前准备
 #   POSTGRES_PASSWORD       默认 welfare，建议修改
 #   DATABASE_URL            默认自动拼接 postgres 地址
 #   APP_URL                 默认 http://localhost:31888
@@ -271,8 +270,8 @@ x-app-environment: &amp;app-environment
   LOG_LEVEL: ${LOG_LEVEL:-info}
   APP_PORT: '3000'
   APP_URL: ${APP_URL:-http://localhost:31888}
-  APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:?APP_ENCRYPTION_KEY is required}
-  AUTH_SESSION_SECRET: ${AUTH_SESSION_SECRET:?AUTH_SESSION_SECRET is required}
+  APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:-}
+  AUTH_SESSION_SECRET: ${AUTH_SESSION_SECRET:-}
   DATABASE_URL: ${DATABASE_URL:-postgresql://welfare:${POSTGRES_PASSWORD:-welfare}@postgres:5432/welfare?schema=public}
   YYB_BASE_URL: ${YYB_BASE_URL:-http://yyb-go:8000}
   YYB_INTEGRATION_TOKEN: ${YYB_INTEGRATION_TOKEN:-}
@@ -311,7 +310,7 @@ services:
     restart: unless-stopped
     environment:
       &lt;&lt;: *app-environment
-    command: sh -c "node tools/migrate.mjs &amp;&amp; node apps/api/dist/main.js"
+    command: sh -c "node --import ./tools/ensure-secrets.mjs tools/migrate.mjs &amp;&amp; node --import ./tools/ensure-secrets.mjs apps/api/dist/main.js"
     ports:
       - '${API_HOST_PORT:-31888}:3000'
     volumes:
@@ -333,7 +332,7 @@ services:
     restart: unless-stopped
     environment:
       &lt;&lt;: *app-environment
-    command: node apps/worker/dist/main.js
+    command: node --import ./tools/ensure-secrets.mjs apps/worker/dist/main.js
     volumes:
       - fw-data:/data
     networks:
@@ -358,17 +357,17 @@ networks:
   </details>
 
   <details class="method-notes">
-    <summary>必填环境变量 / 没有终端时生成密钥</summary>
+    <summary>可选环境变量 / 手动指定密钥</summary>
     <ul class="deploy-list">
-      <li><b>APP_ENCRYPTION_KEY</b>：必填，32 字节 base64。</li>
-      <li><b>AUTH_SESSION_SECRET</b>：必填，32 字节 base64。</li>
-      <li><b>POSTGRES_PASSWORD</b>：建议修改，默认 <code>welfare</code>。</li>
-      <li><b>APP_URL</b>：建议填 <code>http://NAS地址:31888</code>。</li>
+      <li><b>APP_ENCRYPTION_KEY</b>：可选；不填自动生成，保存到 <code>data/secrets.env</code>。</li>
+      <li><b>AUTH_SESSION_SECRET</b>：可选；不填自动生成，保存到 <code>data/secrets.env</code>。</li>
+      <li><b>POSTGRES_PASSWORD</b>：可选，默认 <code>welfare</code>，建议修改。</li>
+      <li><b>APP_URL</b>：可选，建议填 <code>http://NAS地址:31888</code>。</li>
       <li><b>YYB_DOCKER_NETWORK</b>：默认 <code>qinglong_default</code>；YYB 使用自定义网络时修改。</li>
-      <li><b>YYB_BASE_URL</b>：默认 <code>http://yyb-go:8000</code>。</li>
-      <li><b>YYB_INTEGRATION_TOKEN</b>：YYB 集成令牌，可启动后在设置页填写。</li>
+      <li><b>YYB_BASE_URL</b>：默认 <code>http://yyb-go:8000</code>，也可启动后在设置页填写 YYB。</li>
+      <li><b>YYB_INTEGRATION_TOKEN</b>：可选，YYB 集成令牌。</li>
     </ul>
-    <p>没有终端生成密钥时：</p>
+    <p>需要手动指定密钥时：</p>
     <div class="secret-tools">
       <button class="button ghost sm" type="button" data-generate-secrets>生成两个随机密钥</button>
       <div class="secret-row"><span>APP_ENCRYPTION_KEY</span><code id="generated-app-key">点击上方按钮生成</code><button type="button" class="copy-btn" data-copy-target="generated-app-key">复制</button></div>

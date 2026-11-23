@@ -26,7 +26,9 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     env_file: .env
-    command: sh -c "node tools/migrate.mjs && node apps/api/dist/main.js"
+    environment:
+      DATA_DIR: /data
+    command: sh -c "node --import ./tools/ensure-secrets.mjs tools/migrate.mjs && node --import ./tools/ensure-secrets.mjs apps/api/dist/main.js"
     ports:
       - '${API_HOST_PORT:-31888}:3000'
     volumes:
@@ -50,7 +52,9 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     env_file: .env
-    command: node apps/worker/dist/main.js
+    environment:
+      DATA_DIR: /data
+    command: node --import ./tools/ensure-secrets.mjs apps/worker/dist/main.js
     volumes:
       - ../../data:/data
     networks:

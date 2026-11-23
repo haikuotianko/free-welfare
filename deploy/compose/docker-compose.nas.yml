@@ -1,10 +1,9 @@
 # NAS / Docker Compose（预构建镜像，不需要 .env 文件）
 # 所有配置从环境变量读取；可在 NAS 的 Compose UI 里填写，或使用同目录 .env。
 #
-# 必填环境变量：
-#   APP_ENCRYPTION_KEY      openssl rand -base64 32
-#   AUTH_SESSION_SECRET     openssl rand -base64 32
 # 可选环境变量：
+#   APP_ENCRYPTION_KEY / AUTH_SESSION_SECRET
+#     不填会自动生成并持久化到 /data/secrets.env，无需部署前准备
 #   POSTGRES_PASSWORD       默认 welfare，建议修改
 #   DATABASE_URL            默认自动拼接 postgres 地址
 #   APP_URL                 默认 http://localhost:31888
@@ -18,8 +17,8 @@ x-app-environment: &app-environment
   LOG_LEVEL: ${LOG_LEVEL:-info}
   APP_PORT: '3000'
   APP_URL: ${APP_URL:-http://localhost:31888}
-  APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:?APP_ENCRYPTION_KEY is required}
-  AUTH_SESSION_SECRET: ${AUTH_SESSION_SECRET:?AUTH_SESSION_SECRET is required}
+  APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:-}
+  AUTH_SESSION_SECRET: ${AUTH_SESSION_SECRET:-}
   DATABASE_URL: ${DATABASE_URL:-postgresql://welfare:${POSTGRES_PASSWORD:-welfare}@postgres:5432/welfare?schema=public}
   YYB_BASE_URL: ${YYB_BASE_URL:-http://yyb-go:8000}
   YYB_INTEGRATION_TOKEN: ${YYB_INTEGRATION_TOKEN:-}
@@ -58,7 +57,7 @@ services:
     restart: unless-stopped
     environment:
       <<: *app-environment
-    command: sh -c "node tools/migrate.mjs && node apps/api/dist/main.js"
+    command: sh -c "node --import ./tools/ensure-secrets.mjs tools/migrate.mjs && node --import ./tools/ensure-secrets.mjs apps/api/dist/main.js"
     ports:
       - '${API_HOST_PORT:-31888}:3000'
     volumes:
@@ -80,7 +79,7 @@ services:
     restart: unless-stopped
     environment:
       <<: *app-environment
-    command: node apps/worker/dist/main.js
+    command: node --import ./tools/ensure-secrets.mjs apps/worker/dist/main.js
     volumes:
       - fw-data:/data
     networks:

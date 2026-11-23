@@ -16,7 +16,7 @@ NAS 图形界面（推荐，无需 SSH 或 `.env`）：
 
 1. 下载 [`docker-compose.nas.yml`](docker-compose.nas.yml)。
 2. 在群晖 Container Manager、飞牛 Docker、威联通 Container Station 或 Portainer 中新建 Compose 项目并粘贴内容。
-3. 在环境变量中填写 `APP_ENCRYPTION_KEY`、`AUTH_SESSION_SECRET`，建议同时设置 `POSTGRES_PASSWORD`、`APP_URL`、`YYB_DOCKER_NETWORK`。
+3. 可以直接启动；`APP_ENCRYPTION_KEY` / `AUTH_SESSION_SECRET` 会自动生成。需要时再设置 `POSTGRES_PASSWORD`、`APP_URL`、`YYB_DOCKER_NETWORK`。
 
 NAS 开放 SSH 时，也可以运行一键脚本（可选）：
 
