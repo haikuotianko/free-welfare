@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { CalendarClock, X } from 'lucide-vue-next';
 import { describeCron, isValidCron, parseCron, WEEKDAYS, type CronMode } from '../lib/cron';
+import { useEscapeClose } from '../lib/modal-escape';
 
 const props = defineProps<{ open: boolean; value: string }>();
 const emit = defineEmits<{ close: []; save: [cron: string] }>();
@@ -92,6 +93,8 @@ function clearCron() {
   emit('save', '');
   emit('close');
 }
+
+useEscapeClose(() => emit('close'), () => props.open);
 </script>
 
 <template>

@@ -9,6 +9,7 @@
 - 账号页改为顶部账号卡片：显示账号状态、YYB/OpenID、应用数、今日成功、执行偏移和表单数，点击卡片切换下方应用内容，默认选中第一个；应用列表支持按积分升序/降序（再点恢复默认）；添加/移除订阅应用改为可搜索的双栏穿梭弹窗，支持批量勾选和保存差异；倒计时旁的「详情」直接跳到应用详情的脚本区。
 - 应用详情在积分别名旁新增「积分有效期」：支持不设置、按天数（1-3650 天）、月过期和年过期；保存到 `Site.config.pointsExpiry`，应用头部显示对应规则。
 - 新增「运行日志」页 `/logs`：日志持久保存在 PostgreSQL、不自动清理；支持按日志内容、账号、应用、运行状态、日志级别和时间范围筛选，50 条/页，可跳转运行详情；运行页增加「全部日志」入口，移动端底部导航增加「日志」。
+- 日志页的「运行详情」改为当前页弹窗展示，不再跳转运行页；所有弹窗支持按 Esc 关闭（嵌套弹窗只关闭最上层），行为与点击关闭一致。
 - Docker / NAS 默认宿主机 API 端口从 `3000` 改为不常用的 `31888`，容器内部仍监听 `3000`；端口冲突时可在 `.env` 覆盖 `API_HOST_PORT`。
 - 新增多种部署方式：Docker Compose、GHCR 预构建镜像（amd64/arm64）、NAS 专用 Compose、Windows 安装包/脚本、macOS 双击启动、Linux systemd，以及 npm 手动安装；原生方式内置 PostgreSQL，不再要求单独安装数据库。安装包自带 Node.js 运行时，首次启动联网安装依赖并构建，输出在 `release/windows/Free-Welfare-Setup-<版本>.exe`。
 - 新增 `20261121100000_schema_drift` 迁移，补齐 `Run.notBefore`、`Site.registrationMode/registrationNote/runTimeoutMinutes`、`SiteAccount.disabled`、`WechatAccount.timeOffsetMinutes` 和缺失索引；修复全新数据库执行迁移后 Worker 报 `column Run.notBefore does not exist` 的问题。

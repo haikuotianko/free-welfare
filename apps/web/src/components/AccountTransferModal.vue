@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { ArrowLeft, ArrowRight, X } from 'lucide-vue-next';
 import { api, type Site } from '../lib/api';
+import { useEscapeClose } from '../lib/modal-escape';
 import { useAccountStore } from '../stores/account';
 
 const props = defineProps<{ open: boolean; site: Site | null }>();
@@ -119,6 +120,13 @@ watch(
     originalIds = [...selectedIds.value];
   },
   { immediate: true },
+);
+
+useEscapeClose(
+  () => {
+    if (!saving.value) emit('close');
+  },
+  () => props.open && Boolean(props.site),
 );
 </script>
 

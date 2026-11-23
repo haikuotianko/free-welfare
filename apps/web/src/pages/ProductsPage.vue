@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { Package, QrCode, RefreshCw, Search, X } from 'lucide-vue-next';
 import { api, type AccountOverview } from '../lib/api';
+import { useEscapeClose } from '../lib/modal-escape';
 import { useAccountStore } from '../stores/account';
 import Pagination from '../components/Pagination.vue';
 
@@ -56,6 +57,9 @@ const pageSize = 24;
 const failedImages = ref<Set<string>>(new Set());
 const detailProduct = ref<ProductRow | null>(null);
 const qrPreview = ref<{ name: string; url: string } | null>(null);
+
+useEscapeClose(() => { detailProduct.value = null; }, () => Boolean(detailProduct.value));
+useEscapeClose(() => { qrPreview.value = null; }, () => Boolean(qrPreview.value));
 
 function hideImage(id: string) {
   failedImages.value.add(id);

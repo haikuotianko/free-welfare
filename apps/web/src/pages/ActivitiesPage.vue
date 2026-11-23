@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { CalendarCheck, ChevronDown, ChevronRight, FileText, QrCode, RefreshCw, Send, X } from 'lucide-vue-next';
 import { api, type AccountOverview, type Activity, type Run } from '../lib/api';
 import { queueTicketText } from '../lib/labels';
+import { useEscapeClose } from '../lib/modal-escape';
 import { useAccountStore } from '../stores/account';
 import Pagination from '../components/Pagination.vue';
 
@@ -248,6 +249,9 @@ function openParticipate(row: Activity) {
 function closeParticipate() {
   if (!submitting.value) activeActivity.value = null;
 }
+
+useEscapeClose(closeParticipate, () => Boolean(activeActivity.value));
+useEscapeClose(() => { manualActivity.value = null; }, () => Boolean(manualActivity.value));
 
 async function submitParticipate() {
   if (!activeActivity.value || !selectedAccount.value) return;

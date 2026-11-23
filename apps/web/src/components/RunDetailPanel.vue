@@ -4,7 +4,13 @@ import { RotateCcw, UserPlus } from 'lucide-vue-next';
 import type { Run } from '../lib/api';
 import { labelOf, runStatusLabels } from '../lib/labels';
 
-const props = defineProps<{ run: Run | null; loading?: boolean; retrying?: boolean; actioning?: boolean }>();
+const props = defineProps<{
+  run: Run | null;
+  loading?: boolean;
+  retrying?: boolean;
+  actioning?: boolean;
+  actions?: boolean;
+}>();
 const emit = defineEmits<{ retry: [run: Run]; action: [run: Run, action: string] }>();
 const logBox = ref<HTMLElement | null>(null);
 
@@ -74,7 +80,7 @@ function pretty(value: unknown) {
           <span v-if="run.siteScript?.filePath"> · {{ run.siteScript.filePath }}</span>
         </div>
       </div>
-      <div class="flex shrink-0 flex-wrap items-center gap-2">
+      <div v-if="props.actions !== false" class="flex shrink-0 flex-wrap items-center gap-2">
         <button
           v-if="manualAction(run) === 'register'"
           class="btn-primary !px-3 !py-1.5"

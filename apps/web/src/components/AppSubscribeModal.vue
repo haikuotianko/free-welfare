@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { ChevronLeft, ChevronRight, Search, X } from 'lucide-vue-next';
 import type { Site } from '../lib/api';
+import { useEscapeClose } from '../lib/modal-escape';
 
 type SiteOption = Pick<Site, 'id' | 'key' | 'name' | 'appId' | 'pointsName'>;
 
@@ -98,6 +99,8 @@ watch(query, () => {
   selectedAvailable.value = [];
   selectedSubscribed.value = [];
 });
+
+useEscapeClose(close);
 </script>
 
 <template>

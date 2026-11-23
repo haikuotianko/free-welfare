@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { RefreshCw, Search, X } from 'lucide-vue-next';
-import { api, type RunLogEntry, type RunLogPage, type Site } from '../lib/api';
+import { api, type Run, type RunLogEntry, type RunLogPage, type Site } from '../lib/api';
 import { labelOf, runStatusLabels } from '../lib/labels';
+import { useEscapeClose } from '../lib/modal-escape';
 import { useAccountStore } from '../stores/account';
 import Pagination from '../components/Pagination.vue';
+import RunDetailPanel from '../components/RunDetailPanel.vue';
 
 const accountStore = useAccountStore();
 const items = ref<RunLogEntry[]>([]);
@@ -21,6 +23,10 @@ const to = ref('');
 const loading = ref(true);
 const error = ref('');
 const sites = ref<Site[]>([]);
+const runOpen = ref(false);
+const runLoading = ref(false);
+const runDetail = ref<Run | null>(null);
+let runSeq = 0;
 let searchTimer: ReturnType<typeof setTimeout> | null = null;
 
 const statusOptions = Object.entries(runStatusLabels).map(([value, label]) => ({ value, label }));
@@ -85,6 +91,33 @@ function prettyData(data: unknown) {
     return String(data);
   }
 }
+
+function closeRun() {
+  runSeq += 1;
+  runOpen.value = false;
+  runLoading.value = false;
+  runDetail.value = null;
+}
+
+async function openRun(runId: string) {
+  const seq = ++runSeq;
+  runOpen.value = true;
+  runLoading.value = true;
+  runDetail.value = null;
+  try {
+    const fresh = await api.get<Run>(`/runs/${runId}`);
+    if (seq === runSeq) runDetail.value = fresh;
+  } catch (e) {
+    if (seq === runSeq) {
+      error.value = e instanceof Error ? e.message : '加载运行详情失败';
+      closeRun();
+    }
+  } finally {
+    if (seq === runSeq) runLoading.value = false;
+  }
+}
+
+useEscapeClose(closeRun, () => runOpen.value);
 
 async function load() {
   loading.value = true;
@@ -277,9 +310,13 @@ onUnmounted(() => {
             {{ log.accountName }} · {{ log.siteName }}<template v-if="log.scriptName"> · {{ log.scriptName }}</template>
           </span>
           <span v-if="log.durationMs != null" class="text-[11px] text-slate-400">{{ formatDuration(log.durationMs) }}</span>
-          <RouterLink :to="`/runs?run=${log.runId}`" class="ml-auto text-[11px] font-medium text-brand-600 hover:underline dark:text-brand-300">
+          <button
+            type="button"
+            class="ml-auto text-[11px] font-medium text-brand-600 hover:underline dark:text-brand-300"
+            @click="openRun(log.runId)"
+          >
             运行详情
-          </RouterLink>
+          </button>
         </div>
         <div
           class="whitespace-pre-wrap break-words text-sm"
@@ -295,5 +332,23 @@ onUnmounted(() => {
     </div>
 
     <Pagination :page="page" :total="total" :page-size="pageSize" unit="条日志" @update:page="page = $event" />
+
+    <div
+      v-if="runOpen"
+      class="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/60 p-0 sm:items-center sm:p-4"
+      @pointerdown.self="closeRun"
+    >
+      <div class="relative flex max-h-[90vh] w-full max-w-3xl flex-col rounded-t-2xl bg-white shadow-2xl dark:bg-slate-900 sm:rounded-2xl">
+        <button class="btn-ghost absolute right-3 top-3 z-10 !px-2 !py-1.5" aria-label="关闭" @click="closeRun">
+          <X class="h-4 w-4" />
+        </button>
+        <div class="min-h-0 flex-1 overflow-auto p-4 pr-14">
+          <RunDetailPanel :run="runDetail" :loading="runLoading" :actions="false" />
+        </div>
+        <div class="flex justify-end border-t border-slate-100 p-4 dark:border-slate-800">
+          <button class="btn-ghost" @click="closeRun">关闭</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>

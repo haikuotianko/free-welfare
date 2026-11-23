@@ -12,6 +12,7 @@ import {
   type SiteScriptFile,
 } from '../lib/api';
 import { siteIconSrc } from '../lib/site-icon';
+import { useEscapeClose } from '../lib/modal-escape';
 import { useAccountStore } from '../stores/account';
 import { describeCron } from '../lib/cron';
 import AccountTransferModal from '../components/AccountTransferModal.vue';
@@ -371,6 +372,9 @@ function closeRun() {
     runPollTimer = null;
   }
 }
+
+useEscapeClose(closeRun, () => runOpen.value);
+useEscapeClose(() => { qrPreview.value = false; }, () => qrPreview.value);
 
 async function retryRun(run: Run) {
   runRetrying.value = true;

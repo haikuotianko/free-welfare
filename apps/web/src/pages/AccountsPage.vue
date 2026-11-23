@@ -32,6 +32,7 @@ import {
   type YybQrSession,
 } from '../lib/api';
 import { accountStatusLabels, labelOf, runStatusLabels } from '../lib/labels';
+import { useEscapeClose } from '../lib/modal-escape';
 import { runActionDetails } from '../lib/run-actions';
 import { useAccountStore } from '../stores/account';
 import { useClock } from '../stores/clock';
@@ -188,6 +189,10 @@ function closeQr() {
   qrOpen.value = false;
   stopQrPolling();
 }
+
+useEscapeClose(closeQr, () => qrOpen.value);
+useEscapeClose(() => { runOpen.value = false; }, () => runOpen.value);
+useEscapeClose(() => { formsOpen.value = false; }, () => formsOpen.value);
 
 async function startQr() {
   stopQrPolling();

@@ -2,6 +2,7 @@
 import { reactive, watch } from 'vue';
 import { X } from 'lucide-vue-next';
 import type { ActionFormField } from '../lib/api';
+import { useEscapeClose } from '../lib/modal-escape';
 
 const props = defineProps<{
   open: boolean;
@@ -35,6 +36,13 @@ watch(
     if (props.open) reset();
   },
   { deep: true, immediate: true },
+);
+
+useEscapeClose(
+  () => {
+    if (!props.submitting) emit('close');
+  },
+  () => props.open,
 );
 
 function fieldValue(key: string): string {
