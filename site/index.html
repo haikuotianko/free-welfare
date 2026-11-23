@@ -319,13 +319,13 @@ chmod +x deploy/linux/start.sh
               <div><span>适合</span><b>全平台 / 服务器 / NAS</b></div>
               <div><span>需要</span><b>Docker</b></div>
               <div><span>数据库</span><b>容器 PostgreSQL</b></div>
-              <div><span>端口</span><b>80/443 + 3000</b></div>
+              <div><span>端口</span><b>80/443 + 31888</b></div>
             </div>
             <ol class="steps">
               <li>安装 Docker Desktop 或 Docker Engine。</li>
               <li>克隆仓库，复制并编辑 <code>deploy/compose/.env</code>。</li>
               <li>执行下面的命令，首次会构建镜像。</li>
-              <li>访问 <code>http://服务器IP/</code>，或直接访问 <code>:3000</code>。</li>
+              <li>访问 <code>http://服务器IP/</code>，或直接访问 <code>:31888</code>。</li>
             </ol>
             <div class="code-wrap">
               <pre class="code" id="docker-code"><code>git clone https://github.com/haikuotianko/free-welfare.git
@@ -369,7 +369,7 @@ docker compose -f deploy/compose/docker-compose.yml up -d --no-build</code></pre
               <li>下载 <code>docker-compose.nas.yml</code> 和 <code>.env.example</code>。</li>
               <li>把 <code>.env.example</code> 改名为 <code>.env</code>，填写数据库密码、YYB、APP_URL。</li>
               <li>在 NAS 的 Container Manager / Portainer 新建项目，导入 compose 和 .env。</li>
-              <li>启动后访问 <code>http://NAS地址:3000/</code>；端口冲突时改 <code>API_HOST_PORT</code>。</li>
+              <li>启动后访问 <code>http://NAS地址:31888/</code>；端口冲突时改 <code>API_HOST_PORT</code>。</li>
             </ol>
             <div class="code-wrap">
               <pre class="code" id="nas-code"><code>curl -O https://raw.githubusercontent.com/haikuotianko/free-welfare/main/deploy/compose/docker-compose.nas.yml

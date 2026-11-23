@@ -26,7 +26,7 @@ services:
     env_file: .env
     command: sh -c "node tools/migrate.mjs && node apps/api/dist/main.js"
     ports:
-      - '${API_HOST_PORT:-3000}:3000'
+      - '${API_HOST_PORT:-31888}:3000'
     volumes:
       - ../../data:/data
     depends_on:

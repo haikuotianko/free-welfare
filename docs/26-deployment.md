@@ -25,7 +25,7 @@ cp deploy/compose/.env.example deploy/compose/.env
 docker compose -f deploy/compose/docker-compose.yml up -d --build
 ```
 
-- 入口：Caddy `http://服务器IP/`；API 通过宿主机 `API_HOST_PORT`（默认 3000）暴露。
+- 入口：Caddy `http://服务器IP/`；API 通过宿主机 `API_HOST_PORT`（默认 31888）暴露。
 - 数据：仓库根目录 `data/`；数据库卷 `pgdata`。
 - `api` 容器启动时会自动执行 `prisma migrate deploy`。
 - 修改 `CADDY_HTTP_PORT` / `CADDY_HTTPS_PORT` 可避开 NAS 上被占用的 80/443。
@@ -69,13 +69,13 @@ NAS 上建议用不依赖仓库相对路径的 `deploy/compose/docker-compose.na
 1. 在 NAS 的 Docker/Container Manager 里新建项目，目录例如 `/volume1/docker/free-welfare`。
 2. 把 `docker-compose.nas.yml` 内容粘贴到项目编辑器，把 `.env` 放在同一目录。
 3. 修改 `.env`：
-   - `API_HOST_PORT=3000`（NAS 上有冲突时改成 8080 等空闲端口）
+   - `API_HOST_PORT=31888`（NAS 上有冲突时改成其他空闲端口）
    - `APP_PORT=3000`（容器内部端口，一般不用改）
    - `POSTGRES_PASSWORD` / `DATABASE_URL`
    - `APP_ENCRYPTION_KEY` / `AUTH_SESSION_SECRET`
    - `YYB_BASE_URL=http://你的YYB地址:8000`
-   - `APP_URL=http://NAS地址:3000`（如果改了 `API_HOST_PORT`，这里也要改）
-4. 启动项目，访问 `http://NAS地址:3000/`。
+   - `APP_URL=http://NAS地址:31888`（如果改了 `API_HOST_PORT`，这里也要改）
+4. 启动项目，访问 `http://NAS地址:31888/`。
 
 NAS compose 使用命名卷 `fw-pgdata`、`fw-data`，不依赖 `../../data` 路径；如果要备份，映射到 NAS 共享目录也可以，把 `volumes` 改成 `/volume1/docker/free-welfare/data:/data`。
 
@@ -277,7 +277,7 @@ docker compose -f deploy/compose/docker-compose.yml up -d --no-build
 更新后检查：
 
 ```bash
-curl http://127.0.0.1:3000/api/v1/health
+curl http://127.0.0.1:31888/api/v1/health
 docker compose -f deploy/compose/docker-compose.yml logs --tail=100 api worker
 ```
 
