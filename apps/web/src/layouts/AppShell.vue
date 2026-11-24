@@ -81,6 +81,10 @@ function toggleTheme() {
   localStorage.setItem('fw-theme', dark.value ? 'dark' : 'light');
 }
 
+function onAccountChange(event: Event) {
+  accounts.select((event.target as HTMLSelectElement).value);
+}
+
 async function logout() {
   await auth.logout();
   accounts.reset();
@@ -124,6 +128,21 @@ onMounted(() => {
         </div>
         <div class="ml-auto flex items-center gap-1.5 sm:gap-2">
           <ClockWidget />
+          <select
+            v-if="accounts.accounts.length > 0"
+            id="current-account"
+            name="currentAccount"
+            :value="accounts.selectedId"
+            class="input !w-24 !min-h-10 !py-1.5 text-xs sm:!w-36"
+            title="当前账号"
+            aria-label="当前账号"
+            @change="onAccountChange"
+          >
+            <option value="">全部账号</option>
+            <option v-for="account in accounts.accounts" :key="account.id" :value="account.id">
+              {{ account.displayName }}
+            </option>
+          </select>
           <button class="btn-ghost !min-h-10 !px-3" title="切换主题" @click="toggleTheme">
             <Sun v-if="dark" class="h-4 w-4" />
             <Moon v-else class="h-4 w-4" />

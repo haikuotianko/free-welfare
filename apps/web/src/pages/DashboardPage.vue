@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { RefreshCw } from 'lucide-vue-next';
 import { api, type QueueStatus, type Run } from '../lib/api';
 import { labelOf, runStatusLabels } from '../lib/labels';
 import { subscribeRunEvents } from '../stores/runEvents';
+import { useAccountStore } from '../stores/account';
 
 interface DashboardSummary {
   day: string;
@@ -48,6 +49,7 @@ interface DashboardSummary {
   }>;
 }
 
+const accountStore = useAccountStore();
 const router = useRouter();
 const summary = ref<DashboardSummary | null>(null);
 const queueLive = ref<QueueStatus | null>(null);
@@ -98,7 +100,7 @@ function applyCache(cached: CachedDashboard) {
 }
 
 function hydrateFromCache() {
-  const cached = readCache('all');
+  const cached = readCache(accountStore.selectedId);
   if (cached) applyCache(cached);
   return cached;
 }
@@ -109,6 +111,9 @@ const queueCounts = computed(() => ({
   starting: queueLive.value?.active.starting ?? 0,
   queued: queueLive.value?.active.queued ?? summary.value?.runs.queued ?? 0,
 }));
+const selectedLabel = computed(() =>
+  accountStore.selectedAccount ? accountStore.selectedAccount.displayName : '全部账号',
+);
 const pointsLabel = computed(() => {
   const groups = summary.value?.points.byName ?? [];
   if (groups.length === 0) return '积分';
@@ -128,7 +133,8 @@ function scheduleExpiry(delayMs: number) {
 }
 
 async function fetchDashboard(force = false) {
-  const cached = readCache('all');
+  const accountId = accountStore.selectedId;
+  const cached = readCache(accountId);
   const age = cached ? Date.now() - cached.cachedAt : Number.POSITIVE_INFINITY;
 
   if (!force && cached) applyCache(cached);
@@ -146,12 +152,15 @@ async function fetchDashboard(force = false) {
   try {
     const [h, data] = await Promise.all([
       api.get<{ ok: boolean; database: string; version: string }>('/health'),
-      api.get<DashboardSummary>('/dashboard'),
+      api.get<DashboardSummary>(
+        accountId ? `/dashboard?accountId=${encodeURIComponent(accountId)}` : '/dashboard',
+      ),
     ]);
+    if (accountStore.selectedId !== accountId) return;
     health.value = h;
     summary.value = data;
     updatedAt.value = Date.now();
-    writeCache('all', { cachedAt: updatedAt.value, health: h, summary: data });
+    writeCache(accountId, { cachedAt: updatedAt.value, health: h, summary: data });
     scheduleExpiry(CACHE_TTL_MS);
   } catch (e) {
     error.value = e instanceof Error ? e.message : '加载失败';
@@ -226,6 +235,22 @@ function isSoon(value?: string | null) {
 hydrateFromCache();
 if (!summary.value) loading.value = true;
 
+watch(
+  () => accountStore.selectedId,
+  () => {
+    if (expiryTimer) {
+      clearTimeout(expiryTimer);
+      expiryTimer = null;
+    }
+    summary.value = null;
+    health.value = null;
+    updatedAt.value = null;
+    loading.value = true;
+    hydrateFromCache();
+    void fetchDashboard();
+  },
+);
+
 onMounted(() => {
   unsubscribeEvents = subscribeRunEvents((event) => {
     if (event.type === 'run' || event.type === 'sync') scheduleRefresh();
@@ -258,7 +283,7 @@ onUnmounted(() => {
       <div>
         <h2 class="text-lg font-semibold">今天怎么样？</h2>
         <p class="text-sm text-slate-500">
-          当前账号：全部账号 · {{ summary?.day ?? '—' }}
+          当前账号：{{ selectedLabel }} · {{ summary?.day ?? '—' }}
           <span v-if="updatedAt" class="text-xs text-slate-400">· 更新于 {{ formatClock(updatedAt) }}</span>
         </p>
         <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">

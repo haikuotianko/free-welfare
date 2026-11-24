@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router';
 import { Package, QrCode, RefreshCw, Search, X } from 'lucide-vue-next';
 import { api, type AccountOverview } from '../lib/api';
 import { useEscapeClose } from '../lib/modal-escape';
+import { useAccountStore } from '../stores/account';
 import Pagination from '../components/Pagination.vue';
 
 interface ProductRow {
@@ -43,6 +44,7 @@ interface AccountPoint {
 }
 
 const route = useRoute();
+const accountStore = useAccountStore();
 const rows = ref<ProductRow[]>([]);
 const accounts = ref<AccountOverview[]>([]);
 const loading = ref(false);
@@ -73,7 +75,11 @@ const siteOptions = computed(() => {
   return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
 });
 
-const accountPool = computed(() => accounts.value);
+const accountPool = computed(() => {
+  if (!accountStore.selectedId) return accounts.value;
+  const selected = accounts.value.find((account) => account.id === accountStore.selectedId);
+  return selected ? [selected] : accounts.value;
+});
 
 const visible = computed(() => {
   const keyword = query.value.trim().toLowerCase();
@@ -295,7 +301,7 @@ onMounted(load);
 
         <div class="rounded-xl border border-slate-200 p-2 dark:border-slate-800">
           <div class="mb-1.5 text-[11px] text-slate-500">
-            <span>账号积分（最多 5 个）</span>
+            <span>{{ accountStore.selectedId ? '当前账号积分' : '账号积分（最多 5 个）' }}</span>
           </div>
           <div v-if="productAccounts(row).length === 0" class="text-[11px] text-slate-400">该应用还没有绑定账号</div>
           <div v-else class="flex flex-wrap gap-1.5">

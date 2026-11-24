@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { ReceiptText, RefreshCw } from 'lucide-vue-next';
 import { api } from '../lib/api';
+import { useAccountStore } from '../stores/account';
 import Pagination from '../components/Pagination.vue';
 
 interface OrderRow {
@@ -19,15 +20,26 @@ interface OrderRow {
   siteAccount?: { id: string; wechatAccount?: { id: string; displayName: string } };
 }
 
+const accountStore = useAccountStore();
 const rows = ref<OrderRow[]>([]);
 const loading = ref(false);
 const error = ref('');
 const page = ref(1);
 const pageSize = 20;
 
-const visibleRows = computed(() => rows.value);
+const visibleRows = computed(() =>
+  accountStore.selectedId
+    ? rows.value.filter((row) => row.siteAccount?.wechatAccount?.id === accountStore.selectedId)
+    : rows.value,
+);
 const pagedRows = computed(() =>
   visibleRows.value.slice((page.value - 1) * pageSize, page.value * pageSize),
+);
+watch(
+  () => accountStore.selectedId,
+  () => {
+    page.value = 1;
+  },
 );
 watch(
   () => visibleRows.value.length,
@@ -78,6 +90,10 @@ onMounted(load);
           <ReceiptText class="h-5 w-5 text-brand-600" /> 兑换记录
         </h2>
         <p class="text-sm text-slate-500">脚本产生的兑换/抢购订单记录。</p>
+        <p v-if="accountStore.selectedAccount" class="mt-1 text-xs text-brand-600 dark:text-brand-300">
+          当前账号：{{ accountStore.selectedAccount.displayName }}
+        </p>
+        <p v-else class="mt-1 text-xs text-slate-500">当前显示全部账号，可在顶部切换。</p>
       </div>
       <button class="btn-ghost !px-3 !py-1.5" :disabled="loading" @click="load">
         <RefreshCw class="h-4 w-4" :class="{ 'animate-spin': loading }" /> 刷新
@@ -88,7 +104,7 @@ onMounted(load);
 
     <div v-if="visibleRows.length === 0" class="card flex flex-col items-center gap-3 py-10 text-center">
       <ReceiptText class="h-8 w-8 text-slate-400" />
-      <div class="text-sm font-medium">还没有兑换记录</div>
+      <div class="text-sm font-medium">{{ accountStore.selectedId ? '当前账号没有兑换记录' : '还没有兑换记录' }}</div>
       <p class="max-w-md text-sm text-slate-500">运行兑换脚本并确认提交后，记录会出现在这里。</p>
     </div>
 
