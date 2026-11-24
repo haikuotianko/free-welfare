@@ -3,6 +3,7 @@ import type { FastifyReply } from 'fastify';
 import { ZodError } from 'zod';
 import { Prisma } from '@free-welfare/db';
 import { AppError } from './app-error';
+import { zodErrorMessage } from './validate';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -24,7 +25,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       reply.status(400).send({
         error: {
           code: 'validation_failed',
-          message: '请求参数不合法',
+          message: zodErrorMessage(exception),
           details: exception.flatten(),
         },
       });

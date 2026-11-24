@@ -12,6 +12,19 @@ const loading = ref(false);
 
 async function submit() {
   error.value = '';
+  const name = username.value.trim();
+  if (name.length < 3) {
+    error.value = '用户名至少 3 个字符';
+    return;
+  }
+  if (!/^[a-zA-Z0-9_.-]+$/.test(name)) {
+    error.value = '用户名只能包含字母、数字、下划线、点和短横线';
+    return;
+  }
+  if (password.value.length < 6) {
+    error.value = '密码至少 6 位';
+    return;
+  }
   loading.value = true;
   try {
     await auth.setup(username.value, password.value);
@@ -38,7 +51,7 @@ async function submit() {
           <input v-model="username" class="input" autocomplete="username" />
         </div>
         <div>
-          <label class="label">密码（至少 8 位）</label>
+          <label class="label">密码（至少 6 位）</label>
           <input v-model="password" type="password" class="input" autocomplete="new-password" />
         </div>
         <p v-if="error" class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-200">{{ error }}</p>

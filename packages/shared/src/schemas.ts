@@ -4,11 +4,14 @@ import { CAPABILITIES, DEFAULT_TIMEZONE, NETWORK_MODES, REGISTRATION_MODES, SCRI
 export const usernameSchema = z
   .string()
   .trim()
-  .min(3)
-  .max(64)
-  .regex(/^[a-zA-Z0-9_.-]+$/, 'username may contain letters, numbers, _ . -');
+  .min(3, '用户名至少 3 个字符')
+  .max(64, '用户名最多 64 个字符')
+  .regex(/^[a-zA-Z0-9_.-]+$/, '用户名只能包含字母、数字、下划线、点和短横线');
 
-export const passwordSchema = z.string().min(8).max(128);
+export const passwordSchema = z
+  .string()
+  .min(6, '密码至少 6 位')
+  .max(128, '密码最多 128 位');
 
 export const setupSchema = z.object({
   username: usernameSchema,
