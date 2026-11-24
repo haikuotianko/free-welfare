@@ -15,6 +15,7 @@ import { siteIconSrc } from '../lib/site-icon';
 import { useEscapeClose } from '../lib/modal-escape';
 import { useAccountStore } from '../stores/account';
 import { describeCron } from '../lib/cron';
+import { runActionDetails } from '../lib/run-actions';
 import AccountTransferModal from '../components/AccountTransferModal.vue';
 import CronEditorModal from '../components/CronEditorModal.vue';
 import Pagination from '../components/Pagination.vue';
@@ -66,6 +67,7 @@ const runOpen = ref(false);
 const runDetail = ref<Run | null>(null);
 const runLoading = ref(false);
 const runRetrying = ref(false);
+const runActioning = ref(false);
 const runningScriptId = ref('');
 const scriptRunErrors = reactive<Record<string, string>>({});
 let runPollTimer: ReturnType<typeof setTimeout> | null = null;
@@ -411,6 +413,25 @@ async function retryRun(run: Run) {
     error.value = e instanceof Error ? e.message : '重跑失败';
   } finally {
     runRetrying.value = false;
+  }
+}
+
+async function runAction(run: Run, action: string) {
+  // 需要填写参数的动作交给运行页处理，那里有表单弹窗。
+  if (runActionDetails(run).fields.length > 0) {
+    closeRun();
+    await router.push({ path: '/runs', query: { run: run.id } });
+    return;
+  }
+  runActioning.value = true;
+  try {
+    const created = await api.post<Run>(`/runs/${run.id}/action`, { action });
+    message.value = queueTicketText(created.queue) || `已提交：${created.id.slice(0, 8)}`;
+    await openRun(created.id);
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : '操作失败';
+  } finally {
+    runActioning.value = false;
   }
 }
 
@@ -1359,7 +1380,9 @@ onUnmounted(() => {
             :run="runDetail"
             :loading="runLoading"
             :retrying="runRetrying"
+            :actioning="runActioning"
             @retry="retryRun"
+            @action="runAction"
           />
         </div>
         <div class="flex justify-end gap-2 border-t border-slate-100 p-4 dark:border-slate-800">
