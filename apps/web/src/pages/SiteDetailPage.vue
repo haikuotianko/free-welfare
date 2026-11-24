@@ -230,6 +230,7 @@ async function ensureRunAccount(): Promise<{
   account: SiteAccountSummary | null;
   message?: string;
   bound?: boolean;
+  cancelled?: boolean;
 }> {
   const selectedId = accountStore.selectedId;
   const siteName = site.value?.name ?? '该应用';
@@ -253,6 +254,11 @@ async function ensureRunAccount(): Promise<{
     runAccountId.value = existing.id;
     return { account: existing };
   }
+
+  const confirmed = window.confirm(
+    `当前账号「${selectedName}」还没有绑定到「${siteName}」。\n\n是否绑定并运行？`,
+  );
+  if (!confirmed) return { account: null, cancelled: true };
 
   try {
     await api.post(`/sites/${id.value}/accounts`, { wechatAccountId: selectedId });
@@ -396,8 +402,10 @@ async function runScript(script: SiteScript) {
   try {
     const ensured = await ensureRunAccount();
     if (!ensured.account) {
-      scriptRunErrors[script.id] =
-        ensured.message ?? '没有可用的微信账号，请先绑定或启用账号';
+      if (!ensured.cancelled) {
+        scriptRunErrors[script.id] =
+          ensured.message ?? '没有可用的微信账号，请先绑定或启用账号';
+      }
       return;
     }
     if (ensured.bound) {
