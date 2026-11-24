@@ -24,7 +24,7 @@ export const httpUrlSchema = z
   .string()
   .trim()
   .url()
-  .refine((value) => /^https?:\/\//i.test(value), 'only http/https URLs are supported');
+  .refine((value) => /^https?:\/\//i.test(value), '只支持 http(s) 地址');
 
 export const iconUrlSchema = z
   .string()
@@ -37,7 +37,7 @@ export const iconUrlSchema = z
     }
     if (value.startsWith('/') || value.includes('\\') || value.includes('..')) return false;
     return /\.(png|jpe?g|webp|gif|svg|ico)$/i.test(value);
-  }, 'icon must be an http(s) URL or an image path inside the app directory');
+  }, '图标必须是 http(s) 地址或应用目录内的图片路径');
 
 export const rootUrlSchema = z.object({
   id: z.string().min(1).max(64),
@@ -61,7 +61,7 @@ export const siteCreateSchema = z.object({
     .trim()
     .min(2)
     .max(64)
-    .regex(/^[a-z0-9][a-z0-9_-]*$/, 'key must be lowercase ascii'),
+    .regex(/^[a-z0-9][a-z0-9_-]*$/, 'key 只能使用小写字母、数字、下划线和短横线'),
   name: z.string().trim().min(1).max(100),
   platform: z.string().trim().default('wechat_miniprogram'),
   appId: z.string().trim().min(1).max(64),
@@ -83,7 +83,7 @@ export const siteUpdateSchema = z.object({
     .trim()
     .min(2)
     .max(64)
-    .regex(/^[a-z0-9][a-z0-9_-]*$/, 'key must be lowercase ascii')
+    .regex(/^[a-z0-9][a-z0-9_-]*$/, 'key 只能使用小写字母、数字、下划线和短横线')
     .optional(),
   name: z.string().trim().min(1).max(100).optional(),
   platform: z.string().trim().optional(),
@@ -106,7 +106,7 @@ export const siteEnvVarSchema = z.object({
     .trim()
     .min(1)
     .max(100)
-    .regex(/^[A-Za-z_][A-Za-z0-9_]*$/, 'env key must match [A-Za-z_][A-Za-z0-9_]*'),
+    .regex(/^[A-Za-z_][A-Za-z0-9_]*$/, '环境变量名只能包含字母、数字和下划线，且不能以数字开头'),
   value: z.string().max(20_000).default(''),
   secret: z.boolean().default(false),
   description: z.string().max(500).default(''),
