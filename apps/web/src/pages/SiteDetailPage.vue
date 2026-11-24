@@ -18,6 +18,7 @@ import { useAccountStore } from '../stores/account';
 import { describeCron } from '../lib/cron';
 import { runActionDetails } from '../lib/run-actions';
 import AccountTransferModal from '../components/AccountTransferModal.vue';
+import ConfirmDialog from '../components/ConfirmDialog.vue';
 import CronEditorModal from '../components/CronEditorModal.vue';
 import Pagination from '../components/Pagination.vue';
 import RunDetailPanel from '../components/RunDetailPanel.vue';
@@ -70,6 +71,20 @@ const runLoading = ref(false);
 const runRetrying = ref(false);
 const runActioning = ref(false);
 const runningScriptId = ref('');
+const bindConfirmOpen = ref(false);
+const bindSaving = ref(false);
+const pendingBind = ref<{
+  scriptId: string;
+  wechatAccountId: string;
+  accountName: string;
+  siteName: string;
+} | null>(null);
+
+const bindConfirmMessage = computed(() => {
+  const pending = pendingBind.value;
+  if (!pending) return '';
+  return `「${pending.siteName}」下没有账号「${pending.accountName}」。\n\n绑定后会使用该账号运行脚本。`;
+});
 const scriptRunErrors = reactive<Record<string, string>>({});
 let runPollTimer: ReturnType<typeof setTimeout> | null = null;
 let runPollSeq = 0;
@@ -222,65 +237,54 @@ function siteAccountFor(wechatAccountId: string) {
   );
 }
 
+type RunAccountResolution =
+  | { status: 'ready'; account: SiteAccountSummary }
+  | {
+      status: 'needs_binding';
+      wechatAccountId: string;
+      accountName: string;
+      siteName: string;
+    }
+  | { status: 'error'; message: string };
+
 /**
  * 运行脚本前确认用哪个应用账号。
- * 顶部选了当前账号时，优先使用它；还没绑定到该应用时先让用户确认，再绑定并运行。
+ * 顶部选了当前账号时，优先使用它；还没绑定到该应用时交给页面弹窗确认。
  */
-async function ensureRunAccount(): Promise<{
-  account: SiteAccountSummary | null;
-  message?: string;
-  bound?: boolean;
-  cancelled?: boolean;
-}> {
+function resolveRunAccount(): RunAccountResolution {
   const selectedId = accountStore.selectedId;
   const siteName = site.value?.name ?? '该应用';
-  if (!selectedId) return { account: runAccount.value };
+  if (!selectedId) {
+    return runAccount.value
+      ? { status: 'ready', account: runAccount.value }
+      : { status: 'error', message: '没有可用的微信账号，请先绑定或启用账号' };
+  }
 
   const selectedName = accountStore.selectedAccount?.displayName ?? '当前账号';
   const existing = siteAccountFor(selectedId);
   if (existing) {
     if (existing.disabled) {
       return {
-        account: null,
+        status: 'error',
         message: `当前账号「${selectedName}」在「${siteName}」里被停用了，请到账号页启用该应用，或切换其他账号`,
       };
     }
     if (existing.wechatAccount.disabled) {
       return {
-        account: null,
+        status: 'error',
         message: `当前账号「${selectedName}」已停用，请到账号页启用，或切换其他账号`,
       };
     }
     runAccountId.value = existing.id;
-    return { account: existing };
+    return { status: 'ready', account: existing };
   }
 
-  const confirmed = window.confirm(
-    `「${siteName}」下没有账号「${selectedName}」。\n\n是否绑定并运行？`,
-  );
-  if (!confirmed) return { account: null, cancelled: true };
-
-  try {
-    await api.post(`/sites/${id.value}/accounts`, { wechatAccountId: selectedId });
-    await load();
-    const created = siteAccountFor(selectedId);
-    if (!created) {
-      return { account: null, message: `绑定「${selectedName}」到「${siteName}」失败，请稍后重试` };
-    }
-    if (created.disabled) {
-      return {
-        account: null,
-        message: `「${selectedName}」已绑定到「${siteName}」，但该应用账号被停用了，请到账号页启用`,
-      };
-    }
-    runAccountId.value = created.id;
-    return { account: created, bound: true };
-  } catch (e) {
-    return {
-      account: null,
-      message: e instanceof Error ? e.message : `绑定「${selectedName}」到「${siteName}」失败`,
-    };
-  }
+  return {
+    status: 'needs_binding',
+    wechatAccountId: selectedId,
+    accountName: selectedName,
+    siteName,
+  };
 }
 
 async function scrollToHash() {
@@ -390,34 +394,13 @@ function showToast(text: string, type: 'success' | 'error' = 'success') {
   }, 2600);
 }
 
-async function runScript(script: SiteScript) {
-  if (runningScriptId.value) return;
-  delete scriptRunErrors[script.id];
-  if (!script.enabled) {
-    scriptRunErrors[script.id] = '脚本已停用，请先在「编辑」里勾选启用后再运行';
-    return;
-  }
-
+async function submitScriptRun(script: SiteScript, account: SiteAccountSummary) {
   runningScriptId.value = script.id;
+  error.value = '';
+  message.value = '';
   try {
-    const ensured = await ensureRunAccount();
-    if (!ensured.account) {
-      if (!ensured.cancelled) {
-        scriptRunErrors[script.id] =
-          ensured.message ?? '没有可用的微信账号，请先绑定或启用账号';
-      }
-      return;
-    }
-    if (ensured.bound) {
-      showToast(
-        `已把「${accountStore.selectedAccount?.displayName ?? '当前账号'}」绑定到「${site.value?.name ?? '该应用'}」`,
-      );
-    }
-
-    error.value = '';
-    message.value = '';
     const run = await api.post<Run>(`/sites/${id.value}/scripts/${script.id}/run`, {
-      accountId: ensured.account.id,
+      accountId: account.id,
     });
     message.value = queueTicketText(run.queue) || `已提交运行：${run.id.slice(0, 8)}`;
     await openRun(run.id);
@@ -426,6 +409,74 @@ async function runScript(script: SiteScript) {
   } finally {
     runningScriptId.value = '';
   }
+}
+
+async function runScript(script: SiteScript) {
+  if (runningScriptId.value) return;
+  delete scriptRunErrors[script.id];
+  if (!script.enabled) {
+    scriptRunErrors[script.id] = '脚本已停用，请先在「编辑」里勾选启用后再运行';
+    return;
+  }
+
+  const resolved = resolveRunAccount();
+  if (resolved.status === 'error') {
+    scriptRunErrors[script.id] = resolved.message;
+    return;
+  }
+  if (resolved.status === 'needs_binding') {
+    pendingBind.value = {
+      scriptId: script.id,
+      wechatAccountId: resolved.wechatAccountId,
+      accountName: resolved.accountName,
+      siteName: resolved.siteName,
+    };
+    bindConfirmOpen.value = true;
+    return;
+  }
+
+  await submitScriptRun(script, resolved.account);
+}
+
+async function bindSelectedAccount(wechatAccountId: string) {
+  await api.post(`/sites/${id.value}/accounts`, { wechatAccountId });
+  await load();
+  return siteAccountFor(wechatAccountId);
+}
+
+async function confirmBindAndRun() {
+  const pending = pendingBind.value;
+  if (!pending || bindSaving.value) return;
+  bindSaving.value = true;
+  try {
+    const account = await bindSelectedAccount(pending.wechatAccountId);
+    const script = scripts.value.find((item) => item.id === pending.scriptId);
+    bindConfirmOpen.value = false;
+    if (!account) {
+      if (script) {
+        scriptRunErrors[script.id] =
+          `绑定「${pending.accountName}」到「${pending.siteName}」失败，请稍后重试`;
+      }
+      return;
+    }
+    showToast(`已把「${pending.accountName}」绑定到「${pending.siteName}」`);
+    if (script) await submitScriptRun(script, account);
+  } catch (e) {
+    bindConfirmOpen.value = false;
+    const script = scripts.value.find((item) => item.id === pending.scriptId);
+    if (script) {
+      scriptRunErrors[script.id] = e instanceof Error ? e.message : '绑定账号失败';
+    }
+  } finally {
+    bindSaving.value = false;
+    pendingBind.value = null;
+  }
+}
+
+function cancelBind() {
+  if (bindSaving.value) return;
+  bindConfirmOpen.value = false;
+  pendingBind.value = null;
 }
 
 function isRunActive(run: Run | null) {
@@ -1500,6 +1551,15 @@ onUnmounted(() => {
       :site="site"
       @close="accountEditorOpen = false"
       @saved="accountsSaved"
+    />
+    <ConfirmDialog
+      :open="bindConfirmOpen"
+      title="绑定账号"
+      :message="bindConfirmMessage"
+      confirm-text="绑定并运行"
+      :loading="bindSaving"
+      @confirm="confirmBindAndRun"
+      @cancel="cancelBind"
     />
     <CronEditorModal
       :open="cronEditorOpen"
