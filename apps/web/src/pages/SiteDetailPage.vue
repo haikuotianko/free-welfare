@@ -6,6 +6,7 @@ import {
   api,
   type Run,
   type Site,
+  type SiteAccountSummary,
   type SiteDetail,
   type SiteEnvVar,
   type SiteScript,
@@ -213,6 +214,69 @@ watch(
   },
 );
 
+function siteAccountFor(wechatAccountId: string) {
+  return (
+    site.value?.siteAccounts.find(
+      (account) => account.wechatAccount.id === wechatAccountId,
+    ) ?? null
+  );
+}
+
+/**
+ * 运行脚本前确认用哪个应用账号。
+ * 顶部选了当前账号时，优先使用它；还没绑定到该应用时自动绑定，避免误用其他账号。
+ */
+async function ensureRunAccount(): Promise<{
+  account: SiteAccountSummary | null;
+  message?: string;
+  bound?: boolean;
+}> {
+  const selectedId = accountStore.selectedId;
+  const siteName = site.value?.name ?? '该应用';
+  if (!selectedId) return { account: runAccount.value };
+
+  const selectedName = accountStore.selectedAccount?.displayName ?? '当前账号';
+  const existing = siteAccountFor(selectedId);
+  if (existing) {
+    if (existing.disabled) {
+      return {
+        account: null,
+        message: `当前账号「${selectedName}」在「${siteName}」里被停用了，请到账号页启用该应用，或切换其他账号`,
+      };
+    }
+    if (existing.wechatAccount.disabled) {
+      return {
+        account: null,
+        message: `当前账号「${selectedName}」已停用，请到账号页启用，或切换其他账号`,
+      };
+    }
+    runAccountId.value = existing.id;
+    return { account: existing };
+  }
+
+  try {
+    await api.post(`/sites/${id.value}/accounts`, { wechatAccountId: selectedId });
+    await load();
+    const created = siteAccountFor(selectedId);
+    if (!created) {
+      return { account: null, message: `绑定「${selectedName}」到「${siteName}」失败，请稍后重试` };
+    }
+    if (created.disabled) {
+      return {
+        account: null,
+        message: `「${selectedName}」已绑定到「${siteName}」，但该应用账号被停用了，请到账号页启用`,
+      };
+    }
+    runAccountId.value = created.id;
+    return { account: created, bound: true };
+  } catch (e) {
+    return {
+      account: null,
+      message: e instanceof Error ? e.message : `绑定「${selectedName}」到「${siteName}」失败`,
+    };
+  }
+}
+
 async function scrollToHash() {
   if (!route.hash) return;
   await nextTick();
@@ -327,16 +391,25 @@ async function runScript(script: SiteScript) {
     scriptRunErrors[script.id] = '脚本已停用，请先在「编辑」里勾选启用后再运行';
     return;
   }
-  if (!runAccount.value) {
-    scriptRunErrors[script.id] = '没有可用的微信账号，请先绑定或启用账号';
-    return;
-  }
-  error.value = '';
-  message.value = '';
+
   runningScriptId.value = script.id;
   try {
+    const ensured = await ensureRunAccount();
+    if (!ensured.account) {
+      scriptRunErrors[script.id] =
+        ensured.message ?? '没有可用的微信账号，请先绑定或启用账号';
+      return;
+    }
+    if (ensured.bound) {
+      showToast(
+        `已把「${accountStore.selectedAccount?.displayName ?? '当前账号'}」绑定到「${site.value?.name ?? '该应用'}」`,
+      );
+    }
+
+    error.value = '';
+    message.value = '';
     const run = await api.post<Run>(`/sites/${id.value}/scripts/${script.id}/run`, {
-      accountId: runAccount.value.id,
+      accountId: ensured.account.id,
     });
     message.value = queueTicketText(run.queue) || `已提交运行：${run.id.slice(0, 8)}`;
     await openRun(run.id);
