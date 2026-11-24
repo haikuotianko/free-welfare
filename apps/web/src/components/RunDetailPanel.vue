@@ -4,13 +4,16 @@ import { RotateCcw, UserPlus } from 'lucide-vue-next';
 import type { Run } from '../lib/api';
 import { labelOf, runStatusLabels } from '../lib/labels';
 
-const props = defineProps<{
-  run: Run | null;
-  loading?: boolean;
-  retrying?: boolean;
-  actioning?: boolean;
-  actions?: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    run: Run | null;
+    loading?: boolean;
+    retrying?: boolean;
+    actioning?: boolean;
+    actions?: boolean;
+  }>(),
+  { actions: true },
+);
 const emit = defineEmits<{ retry: [run: Run]; action: [run: Run, action: string] }>();
 const logBox = ref<HTMLElement | null>(null);
 

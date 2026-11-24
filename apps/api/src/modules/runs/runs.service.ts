@@ -78,6 +78,27 @@ export class RunsService {
     if (!run.siteScriptId || !run.siteId || !run.siteAccountId) {
       throw new AppError('run_not_actionable', '这条运行记录不能执行操作', 400);
     }
+
+    // 注册已独立成脚本时，优先运行应用的「注册」脚本，而不是重跑签到脚本。
+    if (input.action === 'register') {
+      const registerScript = await this.prisma.client.siteScript.findFirst({
+        where: {
+          siteId: run.siteId,
+          enabled: true,
+          OR: [{ capabilities: { has: 'register' } }, { filePath: 'register.js' }],
+        },
+        orderBy: { createdAt: 'asc' },
+        select: { id: true },
+      });
+      if (registerScript) {
+        return this.queue.enqueue({
+          siteScriptId: registerScript.id,
+          siteId: run.siteId,
+          siteAccountId: run.siteAccountId,
+        });
+      }
+    }
+
     return this.queue.enqueue({
       siteScriptId: run.siteScriptId,
       siteId: run.siteId,
