@@ -11,6 +11,7 @@ import {
   Home,
   LogOut,
   Moon,
+  MoreHorizontal,
   Package,
   PlayCircle,
   ScrollText,
@@ -18,9 +19,11 @@ import {
   Store,
   Sun,
   Users,
+  X,
 } from 'lucide-vue-next';
 import { useAuthStore } from '../stores/auth';
 import { useAccountStore } from '../stores/account';
+import { useEscapeClose } from '../lib/modal-escape';
 import ClockWidget from '../components/ClockWidget.vue';
 
 const route = useRoute();
@@ -48,25 +51,34 @@ const desktopNav = [
 const mobileNav = [
   { to: '/', label: '首页', icon: Home },
   { to: '/accounts', label: '账号', icon: Users },
-  { to: '/sites', label: '应用', icon: Globe2 },
-  { to: '/products', label: '商品', icon: Package },
-  { to: '/activities', label: '活动', icon: CalendarCheck },
-  { to: '/files', label: '文件', icon: FolderOpen },
   { to: '/runs', label: '运行', icon: PlayCircle },
-  { to: '/logs', label: '日志', icon: FileText },
   { to: '/settings', label: '我的', icon: Settings },
 ];
 
+const moreNav = [
+  { to: '/sites', label: '应用', icon: Globe2 },
+  { to: '/store', label: '应用商店', icon: Store },
+  { to: '/products', label: '商品', icon: Package },
+  { to: '/activities', label: '活动', icon: CalendarCheck },
+  { to: '/forms', label: '表单', icon: FormInput },
+  { to: '/files', label: '文件', icon: FolderOpen },
+  { to: '/logs', label: '日志', icon: FileText },
+  { to: '/yyb-requests', label: 'YYB 请求', icon: ScrollText },
+  { to: '/sdk', label: 'SDK 文档', icon: BookOpen },
+];
+
 const title = computed(() => String(route.meta.title ?? 'Free Welfare'));
+const moreOpen = ref(false);
+const moreActive = computed(() =>
+  moreNav.some((item) => route.path === item.to || route.path.startsWith(`${item.to}/`)),
+);
+
+useEscapeClose(() => { moreOpen.value = false; }, () => moreOpen.value);
 
 function toggleTheme() {
   dark.value = !dark.value;
   document.documentElement.classList.toggle('dark', dark.value);
   localStorage.setItem('fw-theme', dark.value ? 'dark' : 'light');
-}
-
-function onAccountChange(event: Event) {
-  accounts.select((event.target as HTMLSelectElement).value);
 }
 
 async function logout() {
@@ -112,21 +124,6 @@ onMounted(() => {
         </div>
         <div class="ml-auto flex items-center gap-1.5 sm:gap-2">
           <ClockWidget />
-          <select
-            v-if="accounts.accounts.length > 0"
-            id="current-account"
-            name="currentAccount"
-            :value="accounts.selectedId"
-            class="input !w-24 !min-h-10 !py-1.5 text-xs sm:!w-36"
-            title="当前账号"
-            aria-label="当前账号"
-            @change="onAccountChange"
-          >
-            <option value="">全部账号</option>
-            <option v-for="account in accounts.accounts" :key="account.id" :value="account.id">
-              {{ account.displayName }}
-            </option>
-          </select>
           <button class="btn-ghost !min-h-10 !px-3" title="切换主题" @click="toggleTheme">
             <Sun v-if="dark" class="h-4 w-4" />
             <Moon v-else class="h-4 w-4" />
@@ -142,7 +139,7 @@ onMounted(() => {
       </main>
     </div>
 
-    <nav class="fixed inset-x-0 bottom-0 z-20 grid grid-cols-9 border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur dark:border-slate-800 dark:bg-slate-900/95 lg:hidden">
+    <nav class="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur dark:border-slate-800 dark:bg-slate-900/95 lg:hidden">
       <RouterLink
         v-for="item in mobileNav"
         :key="item.to"
@@ -153,6 +150,43 @@ onMounted(() => {
         <component :is="item.icon" class="h-5 w-5" />
         {{ item.label }}
       </RouterLink>
+      <button
+        type="button"
+        class="flex flex-col items-center gap-1 py-2 text-[10px]"
+        :class="moreActive ? 'text-brand-600 dark:text-brand-300' : 'text-slate-500'"
+        aria-label="更多菜单"
+        @click="moreOpen = true"
+      >
+        <MoreHorizontal class="h-5 w-5" />
+        更多
+      </button>
     </nav>
+
+    <div
+      v-if="moreOpen"
+      class="fixed inset-0 z-40 bg-slate-950/50 lg:hidden"
+      @pointerdown.self="moreOpen = false"
+    >
+      <div class="absolute inset-x-0 bottom-0 rounded-t-2xl bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-2xl dark:bg-slate-900">
+        <div class="mb-3 flex items-center justify-between">
+          <div class="text-sm font-semibold">更多</div>
+          <button type="button" class="btn-ghost !px-2 !py-1.5" @click="moreOpen = false">
+            <X class="h-4 w-4" />
+          </button>
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          <RouterLink
+            v-for="item in moreNav"
+            :key="item.to"
+            :to="item.to"
+            class="flex flex-col items-center gap-2 rounded-xl border border-slate-200 px-2 py-3 text-xs text-slate-600 transition hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800/60"
+            @click="moreOpen = false"
+          >
+            <component :is="item.icon" class="h-5 w-5" />
+            {{ item.label }}
+          </RouterLink>
+        </div>
+      </div>
+    </div>
   </div>
 </template>

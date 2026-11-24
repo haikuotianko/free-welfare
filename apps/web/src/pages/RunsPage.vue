@@ -6,7 +6,6 @@ import { ApiError, api, type ActionFormField, type Run } from '../lib/api';
 import { labelOf, queueTicketText, runStatusLabels } from '../lib/labels';
 import { useEscapeClose } from '../lib/modal-escape';
 import { runActionDetails } from '../lib/run-actions';
-import { useAccountStore } from '../stores/account';
 import { runEventsConnected, subscribeRunEvents, type RunLogEvent } from '../stores/runEvents';
 import RunDetailPanel from '../components/RunDetailPanel.vue';
 import ActionFormModal from '../components/ActionFormModal.vue';
@@ -14,7 +13,6 @@ import Pagination from '../components/Pagination.vue';
 
 const route = useRoute();
 const router = useRouter();
-const accountStore = useAccountStore();
 const runs = ref<Run[]>([]);
 const selected = ref<Run | null>(null);
 const selectedLoading = ref(false);
@@ -37,17 +35,11 @@ let unsubscribeEvents: (() => void) | null = null;
 const visibleRuns = computed(() =>
   runs.value.filter((run) => {
     const query = siteQuery.value.trim().toLowerCase();
-    if (query) {
-      const site = run.site ?? run.task?.binding?.site;
-      if (!site) return false;
-      const values = [site.name, site.key, site.appId].filter(Boolean);
-      if (!values.some((value) => String(value).toLowerCase().includes(query))) return false;
-    }
-    if (!accountStore.selectedId) return true;
-    const id =
-      run.siteAccount?.wechatAccount?.id ??
-      run.task?.binding?.siteAccount?.wechatAccount?.id;
-    return id === accountStore.selectedId;
+    if (!query) return true;
+    const site = run.site ?? run.task?.binding?.site;
+    if (!site) return false;
+    const values = [site.name, site.key, site.appId].filter(Boolean);
+    return values.some((value) => String(value).toLowerCase().includes(query));
   }),
 );
 
@@ -55,7 +47,7 @@ const pagedRuns = computed(() =>
   visibleRuns.value.slice((page.value - 1) * pageSize, page.value * pageSize),
 );
 
-watch([siteQuery, () => accountStore.selectedId], () => {
+watch(siteQuery, () => {
   page.value = 1;
   if (selected.value && !visibleRuns.value.some((run) => run.id === selected.value?.id)) {
     selected.value = null;
@@ -292,10 +284,6 @@ onUnmounted(() => {
       <div>
         <h2 class="text-lg font-semibold">运行</h2>
         <p class="text-sm text-slate-500">运行记录、错误码和日志；这里显示最近 50 条，完整历史请用「全部日志」搜索。</p>
-        <p v-if="accountStore.selectedAccount" class="mt-1 text-xs text-brand-600 dark:text-brand-300">
-          当前账号：{{ accountStore.selectedAccount.displayName }}
-        </p>
-        <p v-else class="mt-1 text-xs text-slate-500">当前显示全部账号，可在右上角切换。</p>
       </div>
       <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
         <div class="relative min-w-0 flex-1 sm:w-64 sm:flex-none">
@@ -352,7 +340,7 @@ onUnmounted(() => {
         <div v-if="visibleRuns.length === 0" class="flex flex-col items-center gap-3 py-10 text-center">
           <PlayCircle class="h-8 w-8 text-slate-400" />
           <div class="text-sm font-medium">
-            {{ siteQuery.trim() ? '没有匹配的运行记录' : accountStore.selectedId ? '当前账号没有运行记录' : '还没有运行' }}
+            {{ siteQuery.trim() ? '没有匹配的运行记录' : '还没有运行' }}
           </div>
           <p v-if="siteQuery.trim()" class="text-sm text-slate-500">
             没有找到名称或 AppID 包含“{{ siteQuery.trim() }}”的运行记录，换个关键词试试。

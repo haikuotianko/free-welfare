@@ -41,6 +41,7 @@ model WechatAccount {
   scanProduct   String?
   openidMasked  String?
   avatarUrl     String?
+  disabled      Boolean       @default(false)
   timeOffsetMinutes Int       @default(0)
   lastSyncedAt  DateTime?
   raw           Json?

@@ -13,7 +13,6 @@ import {
 } from '../lib/api';
 import { siteIconSrc } from '../lib/site-icon';
 import { useEscapeClose } from '../lib/modal-escape';
-import { useAccountStore } from '../stores/account';
 import { describeCron } from '../lib/cron';
 import AccountTransferModal from '../components/AccountTransferModal.vue';
 import CronEditorModal from '../components/CronEditorModal.vue';
@@ -36,7 +35,6 @@ import CodeEditor from '../components/CodeEditor.vue';
 const route = useRoute();
 const router = useRouter();
 const id = computed(() => String(route.params.id));
-const accountStore = useAccountStore();
 
 const site = ref<SiteDetail | null>(null);
 const scripts = ref<SiteScript[]>([]);
@@ -1278,16 +1276,16 @@ onUnmounted(() => {
             <div class="flex flex-wrap items-center gap-2">
               <span class="font-medium">{{ account.wechatAccount.displayName }}</span>
               <span
-                v-if="accountStore.selectedId === account.wechatAccount.id"
-                class="chip bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-100"
-              >
-                当前
-              </span>
-              <span
                 v-if="account.disabled"
                 class="chip bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-200"
               >
                 已禁用自动运行
+              </span>
+              <span
+                v-if="account.wechatAccount.disabled"
+                class="chip bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-200"
+              >
+                账号已停用
               </span>
             </div>
             <div class="text-xs text-slate-500">业务 ID：{{ account.businessUserId ?? '—' }}</div>
@@ -1297,13 +1295,6 @@ onUnmounted(() => {
               <span class="chip" :class="statusClass(account.status)">{{ labelOf(accountStatusLabels, account.status) }}</span>
               <div class="mt-1 text-xs text-slate-500">余额：{{ account.pointAccount?.balance ?? '—' }}</div>
             </div>
-            <button
-              v-if="accountStore.selectedId !== account.wechatAccount.id"
-              class="btn-ghost !px-2 !py-1"
-              @click="accountStore.select(account.wechatAccount.id)"
-            >
-              设为当前
-            </button>
             <RouterLink
               :to="{ path: '/accounts', query: { forms: account.wechatAccount.id } }"
               class="btn-ghost !px-2 !py-1"

@@ -6,11 +6,6 @@ export const useAccountStore = defineStore('account', () => {
   const loaded = ref(false);
   const loading = ref(false);
   const accounts = ref<AccountOverview[]>([]);
-  const selectedId = ref(localStorage.getItem('fw-account') || '');
-
-  const selectedAccount = computed(
-    () => accounts.value.find((account) => account.id === selectedId.value) ?? null,
-  );
 
   const allSiteAccounts = computed(() =>
     accounts.value.flatMap((account) =>
@@ -31,38 +26,23 @@ export const useAccountStore = defineStore('account', () => {
     loading.value = true;
     try {
       accounts.value = await api.get<AccountOverview[]>('/accounts/overview');
-      if (selectedId.value && !accounts.value.some((account) => account.id === selectedId.value)) {
-        selectedId.value = '';
-        localStorage.removeItem('fw-account');
-      }
       loaded.value = true;
     } finally {
       loading.value = false;
     }
   }
 
-  function select(id: string) {
-    selectedId.value = id;
-    if (id) localStorage.setItem('fw-account', id);
-    else localStorage.removeItem('fw-account');
-  }
-
   function reset() {
     accounts.value = [];
-    selectedId.value = '';
     loaded.value = false;
-    localStorage.removeItem('fw-account');
   }
 
   return {
     loaded,
     loading,
     accounts,
-    selectedId,
-    selectedAccount,
     allSiteAccounts,
     load,
-    select,
     reset,
   };
 });

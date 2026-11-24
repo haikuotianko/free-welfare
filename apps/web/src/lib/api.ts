@@ -63,6 +63,7 @@ export interface Account {
   displayName: string;
   remark?: string | null;
   status: string;
+  disabled?: boolean;
   scanProduct?: string | null;
   openidMasked?: string | null;
   timeOffsetMinutes: number;
@@ -322,7 +323,7 @@ export interface SiteAccountSummary {
   nickname?: string | null;
   businessUserId?: string | null;
   lastLoginAt?: string | null;
-  wechatAccount: { id: string; displayName: string; status: string };
+  wechatAccount: { id: string; displayName: string; status: string; disabled?: boolean };
   pointAccount?: { balance: number; currency: string; expiringAmount: number; nextExpiryAt?: string | null } | null;
 }
 

@@ -4,9 +4,14 @@ import { YybService } from './yyb.service';
 import { SessionGuard } from '../../common/session.guard';
 import { parseInput } from '../../common/validate';
 
-const accountUpdateSchema = z.object({
-  timeOffsetMinutes: z.number().int().min(0).max(1440),
-});
+const accountUpdateSchema = z
+  .object({
+    timeOffsetMinutes: z.number().int().min(0).max(1440).optional(),
+    disabled: z.boolean().optional(),
+  })
+  .refine((value) => value.timeOffsetMinutes !== undefined || value.disabled !== undefined, {
+    message: '没有需要更新的字段',
+  });
 
 const requestQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),

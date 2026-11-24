@@ -4,7 +4,6 @@ import { CalendarCheck, ChevronDown, ChevronRight, FileText, QrCode, RefreshCw, 
 import { api, type AccountOverview, type Activity, type Run } from '../lib/api';
 import { queueTicketText } from '../lib/labels';
 import { useEscapeClose } from '../lib/modal-escape';
-import { useAccountStore } from '../stores/account';
 import Pagination from '../components/Pagination.vue';
 
 interface ActivityGroup {
@@ -17,7 +16,6 @@ interface ActivityGroup {
   lastSyncedAt: string;
 }
 
-const accountStore = useAccountStore();
 const rows = ref<Activity[]>([]);
 const accounts = ref<AccountOverview[]>([]);
 const loading = ref(false);
@@ -114,9 +112,6 @@ async function load() {
     accounts.value = accountList;
     rows.value = activityList;
     const preferred =
-      (accountStore.selectedId && accountList.some((account) => account.id === accountStore.selectedId)
-        ? accountStore.selectedId
-        : '') ||
       (accountList.some((account) => account.id === selectedAccountId.value)
         ? selectedAccountId.value
         : '') ||
@@ -282,13 +277,6 @@ async function submitParticipate() {
     submitting.value = false;
   }
 }
-
-watch(
-  () => accountStore.selectedId,
-  (id) => {
-    if (id && accounts.value.some((account) => account.id === id)) selectedAccountId.value = id;
-  },
-);
 
 watch(selectedAccountId, () => {
   expandedGroups.value = new Set();

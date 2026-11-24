@@ -305,7 +305,7 @@ export class RunnerService implements OnModuleInit, OnModuleDestroy {
           site: {
             include: {
               siteAccounts: {
-                where: { disabled: false },
+                where: { disabled: false, wechatAccount: { disabled: false } },
                 include: { wechatAccount: true },
               },
             },

@@ -75,7 +75,7 @@ watch(message, (value) => {
 });
 
 const loading = ref(false);
-const selectedAccountId = ref(accountStore.selectedId);
+const selectedAccountId = ref('');
 const sites = ref<Site[]>([]);
 const templates = ref<FormTemplate[]>([]);
 const subscribeOpen = ref(false);
@@ -93,6 +93,7 @@ const registrationRunId = ref('');
 const registrationFields = ref<ActionFormField[]>([]);
 const savingOffset = ref('');
 const refreshingAccount = ref('');
+const togglingAccount = ref('');
 const refreshingApp = ref('');
 const togglingApp = ref('');
 const envEditingApp = ref('');
@@ -292,6 +293,26 @@ async function refresh(account: AccountOverview) {
   }
 }
 
+async function toggleAccountDisabled(account: AccountOverview, event: Event) {
+  const input = event.target as HTMLInputElement;
+  const disabled = input.checked;
+  togglingAccount.value = account.id;
+  error.value = '';
+  message.value = '';
+  try {
+    await api.patch(`/accounts/${account.id}`, { disabled });
+    account.disabled = disabled;
+    message.value = disabled
+      ? `已停用「${account.displayName}」`
+      : `已启用「${account.displayName}」`;
+  } catch (e) {
+    input.checked = Boolean(account.disabled);
+    error.value = e instanceof Error ? e.message : '保存失败';
+  } finally {
+    togglingAccount.value = '';
+  }
+}
+
 async function saveOffset(account: AccountOverview, event: Event) {
   const input = event.target as HTMLInputElement;
   const value = Math.max(0, Math.min(1440, Math.trunc(Number(input.value) || 0)));
@@ -367,11 +388,6 @@ function formatTime(value?: string | null) {
 
 function selectAccountCard(accountId: string) {
   selectedAccountId.value = accountId;
-}
-
-function setCurrent(account: AccountOverview) {
-  accountStore.select(account.id);
-  selectedAccountId.value = account.id;
 }
 
 function accountDoneCount(account: AccountOverview) {
@@ -931,9 +947,6 @@ onUnmounted(() => {
       <div>
         <h2 class="text-lg font-semibold">微信账号</h2>
         <p class="text-sm text-slate-500">每个账号对应的应用、积分、签到状态、订阅和配置（执行偏移、表单资料、账号环境变量）。</p>
-        <p v-if="accountStore.selectedAccount" class="mt-1 text-xs text-brand-600 dark:text-brand-300">
-          全局当前账号：{{ accountStore.selectedAccount.displayName }}
-        </p>
       </div>
       <div class="flex flex-wrap items-center gap-2">
         <RouterLink to="/forms" class="btn-ghost !px-3 !py-1.5">表单配置</RouterLink>
@@ -956,12 +969,15 @@ onUnmounted(() => {
     </div>
 
     <template v-else>
-      <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <div class="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 xl:grid-cols-3">
         <article
           v-for="account in accountStore.accounts"
           :key="account.id"
-          class="card cursor-pointer space-y-2 !p-3 transition hover:border-brand-300 dark:hover:border-brand-700"
-          :class="selectedAccount?.id === account.id ? 'ring-2 ring-brand-400 dark:ring-brand-700' : ''"
+          class="card w-[85vw] max-w-[20rem] shrink-0 snap-start cursor-pointer space-y-2 !p-3 transition hover:border-brand-300 dark:hover:border-brand-700 sm:w-auto sm:max-w-none"
+          :class="[
+            selectedAccount?.id === account.id ? 'ring-2 ring-brand-400 dark:ring-brand-700' : '',
+            account.disabled ? 'opacity-60' : '',
+          ]"
           role="button"
           tabindex="0"
           @click="selectAccountCard(account.id)"
@@ -972,10 +988,7 @@ onUnmounted(() => {
             <div class="min-w-0">
               <div class="flex flex-wrap items-center gap-1.5">
                 <span class="truncate text-sm font-semibold">{{ account.displayName }}</span>
-                <span v-if="accountStore.selectedId === account.id" class="chip bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-100">
-                  <CheckCircle2 class="mr-1 h-3 w-3" /> 当前账号
-                </span>
-                <span v-else-if="selectedAccount?.id === account.id" class="chip bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                <span v-if="selectedAccount?.id === account.id" class="chip bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                   查看中
                 </span>
               </div>
@@ -986,7 +999,10 @@ onUnmounted(() => {
                 YYB #{{ account.yybRef }} · {{ account.scanProduct ?? '未知渠道' }} · OpenID：{{ account.openidMasked ?? '—' }}
               </div>
             </div>
-            <span v-if="account.status === 'alive'" class="chip" :class="statusClass(account.status)">
+            <span v-if="account.disabled" class="chip bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-200">
+              已停用
+            </span>
+            <span v-else-if="account.status === 'alive'" class="chip" :class="statusClass(account.status)">
               {{ labelOf(accountStatusLabels, account.status) }}
             </span>
             <button
@@ -1008,15 +1024,20 @@ onUnmounted(() => {
             <span>偏移 <b class="text-slate-700 dark:text-slate-200">{{ offsetLabel(account) }}</b></span>
             <span>表单 <b class="text-slate-700 dark:text-slate-200">{{ account.accountForms.length }}</b></span>
           </div>
-          <div class="flex flex-wrap gap-1.5">
-            <button
-              v-if="accountStore.selectedId !== account.id"
-              type="button"
-              class="btn-ghost !px-2 !py-1 text-[11px]"
-              @click.stop="setCurrent(account)"
+          <div class="flex flex-wrap items-center gap-1.5">
+            <label
+              class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 px-2 py-1 text-[11px] text-slate-600 dark:border-slate-700 dark:text-slate-300"
+              @click.stop
             >
-              设为当前
-            </button>
+              <input
+                type="checkbox"
+                class="h-3.5 w-3.5 rounded border-slate-300 text-brand-600 focus:ring-brand-500 dark:border-slate-600 dark:bg-slate-800"
+                :checked="account.disabled"
+                :disabled="togglingAccount === account.id"
+                @change="toggleAccountDisabled(account, $event)"
+              />
+              不启用
+            </label>
             <button type="button" class="btn-ghost !px-2 !py-1 text-[11px]" title="账号配置、执行偏移和表单资料" @click.stop="openForms(account)">
               <Settings class="h-3.5 w-3.5" /> 配置
             </button>
@@ -1081,14 +1102,6 @@ onUnmounted(() => {
                 <ArrowDown class="h-3 w-3" /> 积分
               </button>
             </div>
-            <button
-              v-if="accountStore.selectedId !== selectedAccount.id"
-              type="button"
-              class="btn-ghost !px-2 !py-1 text-[11px]"
-              @click="setCurrent(selectedAccount)"
-            >
-              设为当前
-            </button>
             <button type="button" class="btn-primary !px-2 !py-1 text-[11px]" @click="openSubscribe(selectedAccount)">
               <ListPlus class="h-3.5 w-3.5" /> 管理订阅
             </button>

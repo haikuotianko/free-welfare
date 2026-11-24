@@ -121,12 +121,12 @@ export class SiteScriptsService {
       if (!account) throw new AppError('not_found', '该应用下没有这个账号', 404);
     } else {
       const accounts = await this.prisma.client.siteAccount.findMany({
-        where: { siteId, disabled: false },
+        where: { siteId, disabled: false, wechatAccount: { disabled: false } },
         take: 2,
         orderBy: { createdAt: 'asc' },
       });
       if (accounts.length === 0) {
-        throw new AppError('account_required', '请先为应用绑定微信账号', 400);
+        throw new AppError('account_required', '没有可用的微信账号，请先绑定或启用账号', 400);
       }
       if (accounts.length > 1) {
         throw new AppError('account_required', '应用下有多个账号，请指定要运行的账号', 400);

@@ -170,6 +170,24 @@ export class QueueService {
   }
 
   private async enqueueLocked(input: EnqueueInput) {
+    if (input.siteAccountId) {
+      const siteAccount = await this.prisma.client.siteAccount.findUnique({
+        where: { id: input.siteAccountId },
+        select: {
+          disabled: true,
+          wechatAccount: { select: { disabled: true } },
+        },
+      });
+      if (!siteAccount) {
+        throw new AppError('not_found', '账号不存在', 404);
+      }
+      if (siteAccount.disabled) {
+        throw new AppError('account_disabled', '该账号在此应用已禁用自动运行', 400);
+      }
+      if (siteAccount.wechatAccount.disabled) {
+        throw new AppError('account_disabled', '该微信账号已停用，请先在账号页启用', 400);
+      }
+    }
     const config = await this.getConfig();
     const now = new Date();
     const [active, queued] = await Promise.all([
