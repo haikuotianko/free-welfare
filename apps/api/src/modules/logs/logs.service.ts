@@ -125,7 +125,7 @@ export class LogsService {
           siteKey: site?.key ?? '',
           siteAccountId: siteAccount?.id ?? null,
           accountId: account?.id ?? null,
-          accountName: account?.displayName ?? '—',
+          accountName: account?.alias || account?.displayName || '—',
           scriptName: run.siteScript?.name ?? binding?.script?.name ?? run.task?.capability ?? '—',
         };
       }),

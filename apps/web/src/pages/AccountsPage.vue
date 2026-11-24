@@ -94,6 +94,8 @@ const registrationFields = ref<ActionFormField[]>([]);
 const savingOffset = ref('');
 const refreshingAccount = ref('');
 const togglingAccount = ref('');
+const aliasDraft = ref('');
+const savingAlias = ref(false);
 const refreshingApp = ref('');
 const togglingApp = ref('');
 const envEditingApp = ref('');
@@ -311,6 +313,9 @@ async function toggleAccountEnabled(account: AccountOverview) {
   try {
     await api.patch(`/accounts/${account.id}`, { disabled });
     account.disabled = disabled;
+    if (disabled && accountStore.selectedId === account.id) {
+      accountStore.select('');
+    }
     message.value = disabled
       ? `已停用「${account.displayName}」`
       : `已启用「${account.displayName}」`;
@@ -318,6 +323,26 @@ async function toggleAccountEnabled(account: AccountOverview) {
     error.value = e instanceof Error ? e.message : '保存失败';
   } finally {
     togglingAccount.value = '';
+  }
+}
+
+async function saveAlias() {
+  if (!formsAccount.value) return;
+  savingAlias.value = true;
+  error.value = '';
+  message.value = '';
+  try {
+    await api.patch(`/accounts/${formsAccount.value.id}`, {
+      alias: aliasDraft.value.trim() || null,
+    });
+    await accountStore.load();
+    const latest = accountStore.accounts.find((item) => item.id === formsAccountId.value);
+    aliasDraft.value = latest?.alias ?? '';
+    message.value = '账号别名已保存';
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : '保存别名失败';
+  } finally {
+    savingAlias.value = false;
   }
 }
 
@@ -856,6 +881,7 @@ async function submitRegistrationForm(values: Record<string, string>) {
 function openForms(account: AccountOverview) {
   formsAccountId.value = account.id;
   formsOpen.value = true;
+  aliasDraft.value = account.alias ?? '';
   error.value = '';
   message.value = '';
   addTemplateId.value = '';
@@ -1472,6 +1498,26 @@ onUnmounted(() => {
           </button>
         </div>
         <div class="flex-1 space-y-4 overflow-auto p-4">
+          <div class="rounded-xl border border-slate-200 p-3 dark:border-slate-800">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div class="text-sm font-semibold">账号别名</div>
+                <p class="mt-1 text-xs text-slate-500">用于账号卡片和顶部选择器；留空则使用 YYB 返回的名称。</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <input
+                  v-model="aliasDraft"
+                  class="input !w-40 !py-1 text-xs"
+                  maxlength="64"
+                  placeholder="例如：开发小号"
+                  @keydown.enter.prevent="saveAlias"
+                />
+                <button type="button" class="btn-ghost !px-2 !py-1 text-xs" :disabled="savingAlias" @click="saveAlias">
+                  {{ savingAlias ? '保存中…' : '保存' }}
+                </button>
+              </div>
+            </div>
+          </div>
           <div class="rounded-xl border border-slate-200 p-3 dark:border-slate-800">
             <div class="flex flex-wrap items-start justify-between gap-3">
               <div>

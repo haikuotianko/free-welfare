@@ -30,8 +30,13 @@ export const useAccountStore = defineStore('account', () => {
     if (loading.value) return;
     loading.value = true;
     try {
-      accounts.value = await api.get<AccountOverview[]>('/accounts/overview');
-      if (selectedId.value && !accounts.value.some((account) => account.id === selectedId.value)) {
+      const list = await api.get<AccountOverview[]>('/accounts/overview');
+      accounts.value = list.map((account) => ({
+        ...account,
+        displayName: account.alias || account.displayName,
+      }));
+      const selected = accounts.value.find((account) => account.id === selectedId.value);
+      if (selectedId.value && (!selected || selected.disabled)) {
         selectedId.value = '';
         localStorage.removeItem('fw-account');
       }

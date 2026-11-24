@@ -17,7 +17,7 @@ interface OrderRow {
   message?: string | null;
   createdAt: string;
   site?: { id: string; name: string; key: string; pointsName: string };
-  siteAccount?: { id: string; wechatAccount?: { id: string; displayName: string } };
+  siteAccount?: { id: string; wechatAccount?: { id: string; displayName: string; alias?: string | null } };
 }
 
 const accountStore = useAccountStore();
@@ -116,7 +116,7 @@ onMounted(load);
             <span class="chip" :class="statusClass(row.status)">{{ statusLabel(row.status) }}</span>
           </div>
           <div class="mt-1 text-xs text-slate-500">
-            {{ row.site?.name ?? '应用' }} · {{ row.siteAccount?.wechatAccount?.displayName ?? '账号' }} ·
+            {{ row.site?.name ?? '应用' }} · {{ row.siteAccount?.wechatAccount?.alias || row.siteAccount?.wechatAccount?.displayName || '账号' }} ·
             {{ row.capability }} · {{ formatTime(row.createdAt) }}
           </div>
           <div v-if="row.message" class="mt-1 text-xs text-slate-500">{{ row.message }}</div>

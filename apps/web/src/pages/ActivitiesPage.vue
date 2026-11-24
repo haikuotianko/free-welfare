@@ -111,7 +111,10 @@ async function load() {
       api.get<AccountOverview[]>('/accounts/overview'),
       api.get<Activity[]>('/activities'),
     ]);
-    accounts.value = accountList;
+    accounts.value = accountList.map((account) => ({
+      ...account,
+      displayName: account.alias || account.displayName,
+    }));
     rows.value = activityList;
     const preferred =
       (accountStore.selectedId && accountList.some((account) => account.id === accountStore.selectedId)

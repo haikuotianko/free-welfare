@@ -77,11 +77,10 @@ const runningCount = computed(
 const queuedCount = computed(() => runs.value.filter((run) => run.status === 'queued').length);
 
 function accountName(run: Run) {
-  return (
-    run.siteAccount?.wechatAccount?.displayName ??
-    run.task?.binding?.siteAccount?.wechatAccount?.displayName ??
-    '未知账号'
-  );
+  const account =
+    run.siteAccount?.wechatAccount ??
+    run.task?.binding?.siteAccount?.wechatAccount;
+  return account?.alias || account?.displayName || '未知账号';
 }
 
 function mergeRun(incoming: Run) {

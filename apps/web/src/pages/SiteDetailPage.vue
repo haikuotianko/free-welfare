@@ -1127,7 +1127,7 @@ onUnmounted(() => {
         <div class="flex flex-wrap items-center gap-2">
           <select v-if="site.siteAccounts.length > 1" v-model="runAccountId" class="input !w-auto !py-1.5 text-xs">
             <option v-for="account in site.siteAccounts" :key="account.id" :value="account.id">
-              运行账号：{{ account.wechatAccount.displayName }}
+              运行账号：{{ account.wechatAccount.alias || account.wechatAccount.displayName }}
             </option>
           </select>
           <button class="btn-primary !px-3 !py-1.5" @click="addScript">
@@ -1274,7 +1274,7 @@ onUnmounted(() => {
         <div v-for="account in site.siteAccounts" :key="account.id" class="flex items-center justify-between gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm dark:border-slate-800">
           <div>
             <div class="flex flex-wrap items-center gap-2">
-              <span class="font-medium">{{ account.wechatAccount.displayName }}</span>
+              <span class="font-medium">{{ account.wechatAccount.alias || account.wechatAccount.displayName }}</span>
               <span
                 v-if="account.disabled"
                 class="chip bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-200"
@@ -1319,7 +1319,7 @@ onUnmounted(() => {
               {{ runDetail.site?.name ?? site.name }} ·
               {{ runDetail.siteScript?.name ?? '任务' }}
               <span v-if="runDetail.siteAccount?.wechatAccount?.displayName">
-                · {{ runDetail.siteAccount.wechatAccount.displayName }}
+                · {{ runDetail.siteAccount.wechatAccount.alias || runDetail.siteAccount.wechatAccount.displayName }}
               </span>
             </p>
           </div>

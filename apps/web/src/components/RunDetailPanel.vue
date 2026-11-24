@@ -71,10 +71,10 @@ function pretty(value: unknown) {
         <div class="font-medium">运行详情</div>
         <div class="truncate text-xs text-slate-500">{{ run.id }}</div>
         <div class="mt-1 text-xs text-slate-500">
-          <span v-if="run.siteAccount?.wechatAccount?.displayName" class="font-medium text-slate-700 dark:text-slate-200">
-            {{ run.siteAccount.wechatAccount.displayName }}
+          <span v-if="run.siteAccount?.wechatAccount?.alias || run.siteAccount?.wechatAccount?.displayName" class="font-medium text-slate-700 dark:text-slate-200">
+            {{ run.siteAccount.wechatAccount.alias || run.siteAccount.wechatAccount.displayName }}
           </span>
-          <span v-if="run.siteAccount?.wechatAccount?.displayName"> · </span>
+          <span v-if="run.siteAccount?.wechatAccount?.alias || run.siteAccount?.wechatAccount?.displayName"> · </span>
           {{ run.site?.name ?? run.task?.binding?.site?.name ?? '应用' }} ·
           {{ run.siteScript?.name ?? run.task?.capability ?? '任务' }}
           <span v-if="run.siteScript?.filePath"> · {{ run.siteScript.filePath }}</span>

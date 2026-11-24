@@ -61,6 +61,7 @@ export interface Account {
   id: string;
   yybRef: string;
   displayName: string;
+  alias?: string | null;
   remark?: string | null;
   status: string;
   disabled?: boolean;
@@ -323,7 +324,7 @@ export interface SiteAccountSummary {
   nickname?: string | null;
   businessUserId?: string | null;
   lastLoginAt?: string | null;
-  wechatAccount: { id: string; displayName: string; status: string; disabled?: boolean };
+  wechatAccount: { id: string; displayName: string; alias?: string | null; status: string; disabled?: boolean };
   pointAccount?: { balance: number; currency: string; expiringAmount: number; nextExpiryAt?: string | null } | null;
 }
 
@@ -331,7 +332,7 @@ export interface SiteBindingSummary {
   id: string;
   enabled: boolean;
   script: { id: string; name: string; capability?: string | null; kind: string; status: string };
-  siteAccount: { id: string; wechatAccount: { displayName: string } };
+  siteAccount: { id: string; wechatAccount: { displayName: string; alias?: string | null } };
 }
 
 export interface SiteDetail extends Site {
@@ -413,7 +414,7 @@ export interface Run {
       siteAccount?: {
         id: string;
         nickname?: string | null;
-        wechatAccount?: { id: string; displayName: string };
+        wechatAccount?: { id: string; displayName: string; alias?: string | null };
       };
       script?: { name: string };
     };
@@ -424,7 +425,7 @@ export interface Run {
     id: string;
     nickname?: string | null;
     businessUserId?: string | null;
-    wechatAccount?: { id: string; displayName: string };
+    wechatAccount?: { id: string; displayName: string; alias?: string | null };
   } | null;
   logs?: Array<{ id: string; ts: string; level: string; message: string; data?: unknown }>;
 }

@@ -190,7 +190,10 @@ async function load() {
       api.get<AccountOverview[]>('/accounts/overview'),
     ]);
     rows.value = productList;
-    accounts.value = accountList;
+    accounts.value = accountList.map((account) => ({
+      ...account,
+      displayName: account.alias || account.displayName,
+    }));
   } catch (e) {
     error.value = e instanceof Error ? e.message : '加载失败';
   } finally {

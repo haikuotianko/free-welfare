@@ -36,6 +36,7 @@ model WechatAccount {
   id            String        @id @default(cuid())
   yybRef        String        @unique
   displayName   String
+  alias         String?
   remark        String?
   status        String        @default("unknown")
   scanProduct   String?

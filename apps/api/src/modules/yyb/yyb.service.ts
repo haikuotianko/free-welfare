@@ -230,6 +230,7 @@ export class YybService {
       select: {
         id: true,
         displayName: true,
+        alias: true,
         yybRef: true,
         remark: true,
         status: true,
@@ -442,7 +443,7 @@ export class YybService {
     }));
   }
 
-  async updateAccount(id: string, input: { timeOffsetMinutes?: number; disabled?: boolean }) {
+  async updateAccount(id: string, input: { timeOffsetMinutes?: number; disabled?: boolean; alias?: string | null }) {
     const account = await this.prisma.client.wechatAccount.findUnique({ where: { id } });
     if (!account) throw new AppError('not_found', '账号不存在', 404);
     return this.prisma.client.wechatAccount.update({
@@ -452,6 +453,9 @@ export class YybService {
           ? { timeOffsetMinutes: input.timeOffsetMinutes }
           : {}),
         ...(input.disabled !== undefined ? { disabled: input.disabled } : {}),
+        ...(input.alias !== undefined
+          ? { alias: input.alias?.trim() || null }
+          : {}),
       },
     });
   }

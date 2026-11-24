@@ -8,10 +8,17 @@ const accountUpdateSchema = z
   .object({
     timeOffsetMinutes: z.number().int().min(0).max(1440).optional(),
     disabled: z.boolean().optional(),
+    alias: z.string().trim().max(64).nullable().optional(),
   })
-  .refine((value) => value.timeOffsetMinutes !== undefined || value.disabled !== undefined, {
-    message: '没有需要更新的字段',
-  });
+  .refine(
+    (value) =>
+      value.timeOffsetMinutes !== undefined ||
+      value.disabled !== undefined ||
+      value.alias !== undefined,
+    {
+      message: '没有需要更新的字段',
+    },
+  );
 
 const requestQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
