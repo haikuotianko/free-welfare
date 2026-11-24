@@ -569,6 +569,7 @@ export interface YybTestCheck {
   label: string;
   ok: boolean;
   skipped?: boolean;
+  accountCount?: number;
   httpStatus?: number | null;
   message: string;
 }

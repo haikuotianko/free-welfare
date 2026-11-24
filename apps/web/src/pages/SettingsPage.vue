@@ -232,13 +232,20 @@ onMounted(load);
           {{ yybTest.message }}
         </div>
         <ul class="mt-2 space-y-1.5 text-xs">
-          <li v-for="check in yybTest.checks" :key="check.key" class="flex items-start gap-2">
+          <li v-for="check in yybTest.checks" :key="check.key" class="flex flex-wrap items-start gap-2">
             <CheckCircle2 v-if="check.ok && !check.skipped" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" />
             <Circle v-else class="mt-0.5 h-3.5 w-3.5 shrink-0" :class="check.skipped ? 'text-slate-400' : 'text-amber-500'" />
-            <span>
+            <span class="min-w-0 flex-1">
               <span class="font-medium">{{ check.label }}</span>
               <span class="text-slate-500"> · {{ check.message }}</span>
             </span>
+            <RouterLink
+              v-if="check.key === 'protocol' && check.accountCount === 0"
+              :to="{ path: '/accounts', query: { add: '1' } }"
+              class="shrink-0 rounded-lg bg-brand-600 px-2.5 py-1 text-[11px] font-medium text-white hover:bg-brand-700"
+            >
+              添加账号
+            </RouterLink>
           </li>
         </ul>
       </div>

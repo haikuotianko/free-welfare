@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import {
   ArrowDown,
   ArrowUp,
@@ -54,6 +54,7 @@ const APP_FILTERS: Array<{ key: AppFilter; label: string }> = [
 const APP_PAGE_SIZE = 8;
 
 const route = useRoute();
+const router = useRouter();
 const accountStore = useAccountStore();
 const clock = useClock();
 const error = ref('');
@@ -155,6 +156,12 @@ async function load() {
     const formAccount = typeof route.query.forms === 'string' ? route.query.forms : '';
     if (formAccount && accountStore.accounts.some((account) => account.id === formAccount)) {
       openForms(accountStore.accounts.find((account) => account.id === formAccount)!);
+    }
+    if (route.query.add === '1') {
+      const query = { ...route.query };
+      delete query.add;
+      void router.replace({ query });
+      void startQr();
     }
   } catch (e) {
     error.value = e instanceof Error ? e.message : '加载失败';

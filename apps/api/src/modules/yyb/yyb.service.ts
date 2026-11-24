@@ -75,6 +75,7 @@ export class YybService {
       label: string;
       ok: boolean;
       skipped?: boolean;
+      accountCount?: number;
       httpStatus: number | null;
       message: string;
     }> = [];
@@ -103,6 +104,7 @@ export class YybService {
           : this.probeError(manifest),
     });
 
+    let accountCount: number | undefined;
     if (integrationToken) {
       const accounts = await this.probeYyb(baseUrl, '/integration/accounts', {
         headers: { Authorization: `Bearer ${integrationToken}` },
@@ -112,10 +114,12 @@ export class YybService {
         : Array.isArray(accounts.body?.items)
           ? accounts.body.items.length
           : undefined;
+      accountCount = accounts.ok ? (count ?? 0) : undefined;
       checks.push({
         key: 'accounts',
         label: '集成令牌',
         ok: accounts.ok,
+        accountCount,
         httpStatus: accounts.status,
         message: accounts.ok
           ? `HTTP ${accounts.status}，读取到 ${count ?? 0} 个账号`
@@ -138,12 +142,18 @@ export class YybService {
     checks.push({
       key: 'protocol',
       label: '协议令牌',
-      ok: true,
-      skipped: true,
+      ok: accountCount !== undefined && accountCount > 0,
+      skipped: accountCount === undefined || accountCount === 0,
+      accountCount,
       httpStatus: null,
-      message: protocolToken
-        ? '已填写 YYB_PROTOCOL_TOKEN；协议接口需要实际扫码才会验证，本次不创建扫码会话'
-        : '未填写 YYB_PROTOCOL_TOKEN（可选，仅扫码添加账号需要）',
+      message:
+        accountCount === undefined
+          ? '集成令牌未通过，暂时无法确认账号数量'
+          : accountCount > 0
+            ? `已有 ${accountCount} 个账号，无需重新扫码；协议令牌未单独验证`
+            : protocolToken
+              ? '还没有微信账号，先扫码添加一个'
+              : '还没有微信账号；请先配置 YYB_PROTOCOL_TOKEN，再扫码添加',
     });
 
     const ok = checks
