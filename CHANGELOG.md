@@ -4,6 +4,8 @@
 
 ### Added
 
+- 应用商店、账号、新手引导和设置页的表单操作反馈改为顶部固定 Toast：成功/失败提示不再受页面滚动位置影响，错误显示 6 秒、成功显示 3 秒，可手动关闭；应用下载成功后的 Toast 还带「打开应用」链接。
+- 修复默认应用源同步失败：应用和脚本的 `bundle_url` 现在支持相对路径（如 `bundles/aierxinxuan.json`），会按 `index.json` 地址解析；默认 Free Welfare 脚本源可以正常同步。
 - 设置页和新手引导的配置项新增来源标记：`环境变量`、`已保存`、`默认值`、`未配置`。YYB 地址/令牌、脚本源和 Server酱 token 会标明是来自 `.env`/容器环境变量、页面保存到数据库，还是使用内置默认值。
 - 首次登录新增两步新手引导：先配置 YYB（地址、`YYB_INTEGRATION_TOKEN`、`YYB_PROTOCOL_TOKEN`），再添加应用源。YYB 的「测试连通」会真实请求 `/health`、`/integration/module-manifest.json` 和 `/integration/accounts`；应用源测试会真实下载 `index.json` 并显示脚本/应用数量。已有 YYB 账号时协议令牌项直接显示已勾选，没有账号时显示「添加账号」入口。引导完成状态持久化，之后不会重复弹出，可在设置页重新打开；首次创建管理员时仍只允许空库注册。
 - 官网新增「下载与安装」专区：自动识别当前系统并推荐 Windows 安装包、macOS 脚本、Linux/Docker/NAS 或 npm；提供安装包/源码/Compose/镜像下载入口、SHA-256 校验、逐步命令、复制按钮、方式对比和常见问题。

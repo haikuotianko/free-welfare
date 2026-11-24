@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import {
   ArrowRight,
@@ -19,6 +19,7 @@ import {
   type YybTestResult,
 } from '../lib/api';
 import { useAuthStore } from '../stores/auth';
+import { useToast } from '../lib/toast';
 import ConfigSourceBadge from '../components/ConfigSourceBadge.vue';
 
 const DEFAULT_SOURCE_URL =
@@ -48,6 +49,19 @@ const sourceName = ref('Free Welfare 脚本源');
 const sourceTesting = ref(false);
 const sourceSaving = ref(false);
 const sourceTest = ref<SourceTestResult | null>(null);
+const toast = useToast();
+
+watch(error, (value) => {
+  if (!value) return;
+  toast.error(value);
+  error.value = '';
+});
+
+watch(message, (value) => {
+  if (!value) return;
+  toast.success(value);
+  message.value = '';
+});
 
 const yybDone = computed(() =>
   Boolean(settings.value?.yybBaseUrl && settings.value?.yybConfigured),
@@ -244,9 +258,6 @@ onMounted(load);
         稍后配置
       </button>
     </div>
-
-    <p v-if="error" class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-200">{{ error }}</p>
-    <p v-if="message" class="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200">{{ message }}</p>
 
     <div class="card flex items-center gap-2 sm:gap-4">
       <button class="flex min-w-0 items-center gap-2 text-left" @click="step = 1">

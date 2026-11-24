@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue';
+import { onMounted, reactive, ref, watch } from 'vue';
 import { Bell, CheckCircle2, Circle, ListOrdered, RefreshCw, Save, Server } from 'lucide-vue-next';
 import {
   api,
@@ -9,6 +9,7 @@ import {
   type SourceTestResult,
   type YybTestResult,
 } from '../lib/api';
+import { useToast } from '../lib/toast';
 import ConfigSourceBadge from '../components/ConfigSourceBadge.vue';
 
 const settings = ref<Settings | null>(null);
@@ -24,6 +25,19 @@ const yybTesting = ref(false);
 const yybTest = ref<YybTestResult | null>(null);
 const sourceTesting = ref(false);
 const sourceTest = ref<SourceTestResult | null>(null);
+const toast = useToast();
+
+watch(error, (value) => {
+  if (!value) return;
+  toast.error(value);
+  error.value = '';
+});
+
+watch(message, (value) => {
+  if (!value) return;
+  toast.success(value);
+  message.value = '';
+});
 
 const queueStatus = ref<QueueStatus | null>(null);
 const queueSaving = ref(false);
@@ -170,9 +184,6 @@ onMounted(load);
       <RouterLink to="/forms" class="ml-3 mt-1 inline-block text-xs text-brand-600 hover:underline">表单配置 →</RouterLink>
       <RouterLink to="/sdk" class="ml-3 mt-1 inline-block text-xs text-brand-600 hover:underline">SDK 文档 →</RouterLink>
     </div>
-
-    <p v-if="error" class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-200">{{ error }}</p>
-    <p v-if="message" class="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200">{{ message }}</p>
 
     <form class="card space-y-4" @submit.prevent="save">
       <div class="flex items-center justify-between gap-2">

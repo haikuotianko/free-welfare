@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {
   ArrowDown,
@@ -33,6 +33,7 @@ import {
 } from '../lib/api';
 import { accountStatusLabels, labelOf, runStatusLabels } from '../lib/labels';
 import { useEscapeClose } from '../lib/modal-escape';
+import { useToast } from '../lib/toast';
 import { runActionDetails } from '../lib/run-actions';
 import { useAccountStore } from '../stores/account';
 import { useClock } from '../stores/clock';
@@ -59,6 +60,20 @@ const accountStore = useAccountStore();
 const clock = useClock();
 const error = ref('');
 const message = ref('');
+const toast = useToast();
+
+watch(error, (value) => {
+  if (!value) return;
+  toast.error(value);
+  error.value = '';
+});
+
+watch(message, (value) => {
+  if (!value) return;
+  toast.success(value);
+  message.value = '';
+});
+
 const loading = ref(false);
 const selectedAccountId = ref(accountStore.selectedId);
 const sites = ref<Site[]>([]);
@@ -932,9 +947,6 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <p v-if="error" class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-200">{{ error }}</p>
-    <p v-if="message" class="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200">{{ message }}</p>
-
     <div v-if="accountStore.accounts.length === 0" class="card flex flex-col items-center gap-3 py-10 text-center">
       <ScanLine class="h-8 w-8 text-slate-400" />
       <div class="text-sm font-medium">还没有账号</div>
@@ -1433,9 +1445,6 @@ onUnmounted(() => {
           </button>
         </div>
         <div class="flex-1 space-y-4 overflow-auto p-4">
-          <p v-if="error" class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-200">{{ error }}</p>
-          <p v-if="message" class="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200">{{ message }}</p>
-
           <div class="rounded-xl border border-slate-200 p-3 dark:border-slate-800">
             <div class="flex flex-wrap items-start justify-between gap-3">
               <div>

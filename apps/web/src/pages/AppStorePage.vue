@@ -19,6 +19,7 @@ import {
   type StoreInstallResult,
 } from '../lib/api';
 import { labelOf, trustLevelLabels } from '../lib/labels';
+import { useToast } from '../lib/toast';
 import Pagination from '../components/Pagination.vue';
 
 const sources = ref<AppSource[]>([]);
@@ -36,12 +37,31 @@ const page = ref(1);
 const pageSize = 12;
 const showSourceForm = ref(false);
 const lastSite = ref<{ id: string; name: string } | null>(null);
+const toast = useToast();
 
 const sourceForm = reactive({
   name: '',
   indexUrl: 'local://app-store/index.json',
   repoUrl: 'local://app-store',
   trustLevel: 'official',
+});
+
+watch(error, (value) => {
+  if (!value) return;
+  toast.error(value);
+  error.value = '';
+});
+
+watch(message, (value) => {
+  if (!value) return;
+  const site = lastSite.value;
+  if (site) {
+    toast.success(value, { to: `/sites/${site.id}`, text: `打开 ${site.name}` });
+    lastSite.value = null;
+  } else {
+    toast.success(value);
+  }
+  message.value = '';
 });
 
 const appCounts = computed(() => ({
@@ -112,7 +132,7 @@ async function createSource() {
   );
   if (existing) {
     showSourceForm.value = false;
-    message.value = `应用源「${existing.name}」已存在`;
+    error.value = `应用源「${existing.name}」已存在`;
     return;
   }
   busy.value = { ...busy.value, source: 'create' };
@@ -213,14 +233,6 @@ onMounted(load);
         </button>
       </div>
     </div>
-
-    <p v-if="error" class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-200">{{ error }}</p>
-    <p v-if="message" class="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200">
-      {{ message }}
-      <RouterLink v-if="lastSite" :to="`/sites/${lastSite.id}`" class="ml-2 inline-flex items-center gap-1 font-medium underline">
-        打开 {{ lastSite.name }} <ExternalLink class="h-3 w-3" />
-      </RouterLink>
-    </p>
 
     <form v-if="showSourceForm" class="card space-y-3" @submit.prevent="createSource">
       <div class="flex items-center justify-between gap-2">

@@ -20,7 +20,7 @@ const indexScriptSchema = z.object({
   app_id: z.string().optional(),
   common_version: z.string().optional(),
   review_status: z.enum(['reviewed', 'community', 'custom']).default('community'),
-  bundle_url: z.string().url(),
+  bundle_url: z.string().min(1),
   sha256: z.string().optional(),
   description: z.string().max(2000).default(''),
   manifest: z.record(z.unknown()).optional(),
@@ -185,8 +185,16 @@ export class ScriptsService {
       let synced = 0;
       for (const item of parsed.scripts) {
         const key = assertSafeKey(item.id);
-        if (!/^https?:\/\//i.test(item.bundle_url)) {
-          throw new Error(`bundle_url 不是 http(s)：${item.id}`);
+        if (!/^local:\/\//i.test(item.bundle_url)) {
+          let resolved: URL;
+          try {
+            resolved = new URL(item.bundle_url, source.indexUrl);
+          } catch {
+            throw new Error(`bundle_url 不是合法地址：${item.id}`);
+          }
+          if (resolved.protocol !== 'http:' && resolved.protocol !== 'https:') {
+            throw new Error(`bundle_url 只支持 http(s) 或 local://：${item.id}`);
+          }
         }
         const existingScript = await this.prisma.client.script.findUnique({ where: { key } });
         const script = existingScript
@@ -262,8 +270,16 @@ export class ScriptsService {
         if (!item.bundle_url && !item.files) {
           throw new Error(`应用缺少 bundle_url 或 files：${item.key}`);
         }
-        if (item.bundle_url && !/^(https?:\/\/|local:\/\/)/i.test(item.bundle_url)) {
-          throw new Error(`bundle_url 只支持 http(s) 或 local://：${item.key}`);
+        if (item.bundle_url && !/^local:\/\//i.test(item.bundle_url)) {
+          let resolved: URL;
+          try {
+            resolved = new URL(item.bundle_url, source.indexUrl);
+          } catch {
+            throw new Error(`bundle_url 不是合法地址：${item.key}`);
+          }
+          if (resolved.protocol !== 'http:' && resolved.protocol !== 'https:') {
+            throw new Error(`bundle_url 只支持 http(s) 或 local://：${item.key}`);
+          }
         }
         await this.prisma.client.sourceApp.upsert({
           where: { sourceId_key: { sourceId: source.id, key } },
