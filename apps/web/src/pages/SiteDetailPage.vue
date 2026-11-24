@@ -13,6 +13,7 @@ import {
 } from '../lib/api';
 import { siteIconSrc } from '../lib/site-icon';
 import { useEscapeClose } from '../lib/modal-escape';
+import { useAccountStore } from '../stores/account';
 import { describeCron } from '../lib/cron';
 import AccountTransferModal from '../components/AccountTransferModal.vue';
 import CronEditorModal from '../components/CronEditorModal.vue';
@@ -35,6 +36,7 @@ import CodeEditor from '../components/CodeEditor.vue';
 const route = useRoute();
 const router = useRouter();
 const id = computed(() => String(route.params.id));
+const accountStore = useAccountStore();
 
 const site = ref<SiteDetail | null>(null);
 const scripts = ref<SiteScript[]>([]);
@@ -185,11 +187,28 @@ watch(
   },
 );
 
+const enabledSiteAccounts = computed(() =>
+  (site.value?.siteAccounts ?? []).filter(
+    (account) => !account.disabled && !account.wechatAccount.disabled,
+  ),
+);
+
 const runAccount = computed(
   () =>
-    site.value?.siteAccounts.find((account) => account.id === runAccountId.value) ??
-    site.value?.siteAccounts[0] ??
+    enabledSiteAccounts.value.find((account) => account.id === runAccountId.value) ??
+    enabledSiteAccounts.value[0] ??
     null,
+);
+
+watch(
+  () => accountStore.selectedId,
+  (accountId) => {
+    if (!accountId) return;
+    const matched = enabledSiteAccounts.value.find(
+      (account) => account.wechatAccount.id === accountId,
+    );
+    if (matched) runAccountId.value = matched.id;
+  },
 );
 
 async function scrollToHash() {
@@ -211,8 +230,16 @@ async function load() {
     site.value = data;
     scripts.value = data.scripts ?? [];
     for (const key of Object.keys(scriptRunErrors)) delete scriptRunErrors[key];
-    if (!data.siteAccounts.some((account) => account.id === runAccountId.value)) {
-      runAccountId.value = data.siteAccounts[0]?.id ?? '';
+    const enabledAccounts = data.siteAccounts.filter(
+      (account) => !account.disabled && !account.wechatAccount.disabled,
+    );
+    const globalAccount = accountStore.selectedId
+      ? enabledAccounts.find((account) => account.wechatAccount.id === accountStore.selectedId)
+      : null;
+    if (globalAccount) {
+      runAccountId.value = globalAccount.id;
+    } else if (!enabledAccounts.some((account) => account.id === runAccountId.value)) {
+      runAccountId.value = enabledAccounts[0]?.id ?? '';
     }
     infoForm.name = data.name;
     infoForm.appId = data.appId;
@@ -299,7 +326,7 @@ async function runScript(script: SiteScript) {
     return;
   }
   if (!runAccount.value) {
-    scriptRunErrors[script.id] = '请先在下方绑定一个微信账号';
+    scriptRunErrors[script.id] = '没有可用的微信账号，请先绑定或启用账号';
     return;
   }
   error.value = '';
@@ -1125,8 +1152,8 @@ onUnmounted(() => {
           </p>
         </div>
         <div class="flex flex-wrap items-center gap-2">
-          <select v-if="site.siteAccounts.length > 1" v-model="runAccountId" class="input !w-auto !py-1.5 text-xs">
-            <option v-for="account in site.siteAccounts" :key="account.id" :value="account.id">
+          <select v-if="enabledSiteAccounts.length > 1" v-model="runAccountId" class="input !w-auto !py-1.5 text-xs">
+            <option v-for="account in enabledSiteAccounts" :key="account.id" :value="account.id">
               运行账号：{{ account.wechatAccount.alias || account.wechatAccount.displayName }}
             </option>
           </select>
