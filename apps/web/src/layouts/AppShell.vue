@@ -72,6 +72,9 @@ const moreOpen = ref(false);
 const moreActive = computed(() =>
   moreNav.some((item) => route.path === item.to || route.path.startsWith(`${item.to}/`)),
 );
+const enabledAccounts = computed(() =>
+  accounts.accounts.filter((account) => !account.disabled),
+);
 
 useEscapeClose(() => { moreOpen.value = false; }, () => moreOpen.value);
 
@@ -139,7 +142,7 @@ onMounted(() => {
             @change="onAccountChange"
           >
             <option value="">全部账号</option>
-            <option v-for="account in accounts.accounts" :key="account.id" :value="account.id">
+            <option v-for="account in enabledAccounts" :key="account.id" :value="account.id">
               {{ account.displayName }}
             </option>
           </select>
