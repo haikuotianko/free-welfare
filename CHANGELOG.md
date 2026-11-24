@@ -4,6 +4,7 @@
 
 ### Added
 
+- 设置页和新手引导的配置项新增来源标记：`环境变量`、`已保存`、`默认值`、`未配置`。YYB 地址/令牌、脚本源和 Server酱 token 会标明是来自 `.env`/容器环境变量、页面保存到数据库，还是使用内置默认值。
 - 首次登录新增两步新手引导：先配置 YYB（地址、`YYB_INTEGRATION_TOKEN`、`YYB_PROTOCOL_TOKEN`），再添加应用源。YYB 的「测试连通」会真实请求 `/health`、`/integration/module-manifest.json` 和 `/integration/accounts`；应用源测试会真实下载 `index.json` 并显示脚本/应用数量。已有 YYB 账号时协议令牌项直接显示已勾选，没有账号时显示「添加账号」入口。引导完成状态持久化，之后不会重复弹出，可在设置页重新打开；首次创建管理员时仍只允许空库注册。
 - 官网新增「下载与安装」专区：自动识别当前系统并推荐 Windows 安装包、macOS 脚本、Linux/Docker/NAS 或 npm；提供安装包/源码/Compose/镜像下载入口、SHA-256 校验、逐步命令、复制按钮、方式对比和常见问题。
 - 部署更新更稳：Docker Compose 的 Worker 现在会等 API 健康（迁移完成）后再启动；新增 `deploy/compose/update.sh`，并补充 NAS 生产实例与本地开发实例并行、数据库/数据目录/微信账号隔离和升级回滚说明。

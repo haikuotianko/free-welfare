@@ -8,6 +8,8 @@ export const ONBOARDING_COMPLETED_KEY = 'onboarding.completedAt';
 export const DEFAULT_SCRIPT_SOURCE_URL =
   'https://raw.githubusercontent.com/haikuotianko/free-welfare-scripts/main/index.json';
 
+export type ConfigSource = 'database' | 'env' | 'default' | 'none';
+
 const KEYS = {
   yybBaseUrl: 'yyb.baseUrl',
   yybIntegrationToken: 'yyb.integrationToken',
@@ -35,21 +37,39 @@ export class SettingsService {
   ) {}
 
   async getPublic() {
-    const yybBaseUrl = await this.getString(KEYS.yybBaseUrl) ?? this.config.get('YYB_BASE_URL');
-    const integrationToken = await this.getString(KEYS.yybIntegrationToken) ?? this.config.get('YYB_INTEGRATION_TOKEN');
-    const scriptSourceUrl =
-      (await this.getString(KEYS.scriptSourceUrl)) ??
-      this.config.get('SCRIPT_SOURCE_URL') ??
-      DEFAULT_SCRIPT_SOURCE_URL;
-    const serverchanToken = await this.getString(KEYS.serverchanToken) ?? this.config.get('SERVERCHAN_TOKEN');
+    const yybBaseUrl = await this.resolve(KEYS.yybBaseUrl, this.config.get('YYB_BASE_URL'));
+    const integrationToken = await this.resolve(
+      KEYS.yybIntegrationToken,
+      this.config.get('YYB_INTEGRATION_TOKEN'),
+    );
+    const protocolToken = await this.resolve(
+      KEYS.yybProtocolToken,
+      this.config.get('YYB_PROTOCOL_TOKEN'),
+    );
+    const scriptSourceUrl = await this.resolve(
+      KEYS.scriptSourceUrl,
+      this.config.get('SCRIPT_SOURCE_URL'),
+      DEFAULT_SCRIPT_SOURCE_URL,
+    );
+    const serverchanToken = await this.resolve(
+      KEYS.serverchanToken,
+      this.config.get('SERVERCHAN_TOKEN'),
+    );
     const onboardingCompleted = Boolean(await this.getString(KEYS.onboardingCompleted));
 
     return {
-      yybBaseUrl: yybBaseUrl ?? '',
-      yybConfigured: Boolean(integrationToken),
-      scriptSourceUrl,
-      serverchanConfigured: Boolean(serverchanToken),
+      yybBaseUrl: yybBaseUrl.value ?? '',
+      yybConfigured: Boolean(integrationToken.value),
+      scriptSourceUrl: scriptSourceUrl.value ?? DEFAULT_SCRIPT_SOURCE_URL,
+      serverchanConfigured: Boolean(serverchanToken.value),
       onboardingCompleted,
+      sources: {
+        yybBaseUrl: yybBaseUrl.source,
+        yybIntegrationToken: integrationToken.source,
+        yybProtocolToken: protocolToken.source,
+        scriptSourceUrl: scriptSourceUrl.source,
+        serverchanToken: serverchanToken.source,
+      },
     };
   }
 
@@ -92,6 +112,18 @@ export class SettingsService {
 
   async getServerchanToken(): Promise<string | undefined> {
     return (await this.getString(KEYS.serverchanToken)) ?? this.config.get('SERVERCHAN_TOKEN');
+  }
+
+  private async resolve(
+    key: string,
+    envValue?: string,
+    defaultValue?: string,
+  ): Promise<{ value?: string; source: ConfigSource }> {
+    const dbValue = await this.getString(key);
+    if (dbValue !== undefined) return { value: dbValue, source: 'database' };
+    if (envValue) return { value: envValue, source: 'env' };
+    if (defaultValue !== undefined) return { value: defaultValue, source: 'default' };
+    return { source: 'none' };
   }
 
   private async getString(key: string): Promise<string | undefined> {

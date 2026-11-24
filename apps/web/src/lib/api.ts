@@ -556,12 +556,21 @@ export interface StoreInstallResult {
   bound: number;
 }
 
+export type ConfigSource = 'database' | 'env' | 'default' | 'none';
+
 export interface Settings {
   yybBaseUrl: string;
   yybConfigured: boolean;
   scriptSourceUrl: string;
   serverchanConfigured: boolean;
   onboardingCompleted: boolean;
+  sources: {
+    yybBaseUrl: ConfigSource;
+    yybIntegrationToken: ConfigSource;
+    yybProtocolToken: ConfigSource;
+    scriptSourceUrl: ConfigSource;
+    serverchanToken: ConfigSource;
+  };
 }
 
 export interface YybTestCheck {

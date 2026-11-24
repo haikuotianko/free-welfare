@@ -19,6 +19,7 @@ import {
   type YybTestResult,
 } from '../lib/api';
 import { useAuthStore } from '../stores/auth';
+import ConfigSourceBadge from '../components/ConfigSourceBadge.vue';
 
 const DEFAULT_SOURCE_URL =
   'https://raw.githubusercontent.com/haikuotianko/free-welfare-scripts/main/index.json';
@@ -302,6 +303,7 @@ onMounted(load);
           <label class="label flex flex-wrap items-center gap-1.5">
             YYB 地址
             <code class="rounded bg-slate-100 px-1 py-0.5 font-mono text-[10px] text-slate-500 dark:bg-slate-800 dark:text-slate-400">YYB_BASE_URL</code>
+            <ConfigSourceBadge :source="settings?.sources?.yybBaseUrl" />
           </label>
           <input v-model="yybBaseUrl" class="input font-mono text-xs" placeholder="http://yyb-go:8000" @input="yybTest = null" />
         </div>
@@ -309,7 +311,7 @@ onMounted(load);
           <label class="label flex flex-wrap items-center gap-1.5">
             集成令牌
             <code class="rounded bg-slate-100 px-1 py-0.5 font-mono text-[10px] text-slate-500 dark:bg-slate-800 dark:text-slate-400">YYB_INTEGRATION_TOKEN</code>
-            <span class="text-[11px] font-normal text-slate-400">已配置：{{ settings?.yybConfigured ? '是' : '否' }}</span>
+            <ConfigSourceBadge :source="settings?.sources?.yybIntegrationToken" />
           </label>
           <input v-model="yybIntegrationToken" type="password" class="input" placeholder="留空不修改" autocomplete="off" @input="yybTest = null" />
         </div>
@@ -317,6 +319,7 @@ onMounted(load);
           <label class="label flex flex-wrap items-center gap-1.5">
             协议令牌（可选）
             <code class="rounded bg-slate-100 px-1 py-0.5 font-mono text-[10px] text-slate-500 dark:bg-slate-800 dark:text-slate-400">YYB_PROTOCOL_TOKEN</code>
+            <ConfigSourceBadge :source="settings?.sources?.yybProtocolToken" />
           </label>
           <input v-model="yybProtocolToken" type="password" class="input" placeholder="留空不修改" autocomplete="off" @input="yybTest = null" />
         </div>
@@ -384,7 +387,11 @@ onMounted(load);
 
       <div class="grid gap-3 sm:grid-cols-2">
         <div class="sm:col-span-2">
-          <label class="label">应用源 index.json</label>
+          <label class="label flex flex-wrap items-center gap-1.5">
+            应用源 index.json
+            <code class="rounded bg-slate-100 px-1 py-0.5 font-mono text-[10px] text-slate-500 dark:bg-slate-800 dark:text-slate-400">SCRIPT_SOURCE_URL</code>
+            <ConfigSourceBadge :source="settings?.sources?.scriptSourceUrl" />
+          </label>
           <input v-model="sourceUrl" class="input font-mono text-xs" placeholder="https://.../index.json 或 local://app-store/index.json" @input="sourceTest = null" />
         </div>
         <div>
