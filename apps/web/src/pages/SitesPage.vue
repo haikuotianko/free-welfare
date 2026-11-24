@@ -23,9 +23,19 @@ const loading = ref(false);
 const showForm = ref(false);
 const query = ref('');
 const sourceFilter = ref('');
+const registrationFilter = ref('');
 const page = ref(1);
 const pageSize = 12;
 const form = ref({ key: '', name: '', appId: '', pointsName: '积分' });
+
+const registrationFilterOptions = [
+  { value: '', label: '全部注册方式' },
+  { value: 'unknown', label: '未确认' },
+  { value: 'none', label: '无需注册' },
+  { value: 'auto', label: '自动注册' },
+  { value: 'one_click', label: '一键注册' },
+  { value: 'manual', label: '手动注册' },
+];
 
 const sourceOptions = computed(() => {
   const map = new Map<string, string>();
@@ -39,6 +49,7 @@ const visibleSites = computed(() => {
   const keyword = query.value.trim().toLowerCase();
   return sites.value.filter((site) => {
     if (sourceFilter.value && site.source?.id !== sourceFilter.value) return false;
+    if (registrationFilter.value && site.registrationMode !== registrationFilter.value) return false;
     if (!keyword) return true;
     return [site.name, site.key, site.appId, site.pointsName]
       .filter(Boolean)
@@ -50,7 +61,7 @@ const pagedSites = computed(() =>
   visibleSites.value.slice((page.value - 1) * pageSize, page.value * pageSize),
 );
 
-watch([query, sourceFilter], () => {
+watch([query, sourceFilter, registrationFilter], () => {
   page.value = 1;
 });
 
@@ -147,6 +158,11 @@ onMounted(() => {
         <option value="">全部应用源</option>
         <option v-for="source in sourceOptions" :key="source.id" :value="source.id">{{ source.name }}</option>
       </select>
+      <select v-model="registrationFilter" class="input !w-auto !py-1.5 text-xs">
+        <option v-for="option in registrationFilterOptions" :key="option.value" :value="option.value">
+          {{ option.label }}
+        </option>
+      </select>
       <span class="text-xs text-slate-500">共 {{ sites.length }} 个应用，显示 {{ visibleSites.length }} 个</span>
     </div>
 
@@ -176,7 +192,7 @@ onMounted(() => {
     <div v-if="visibleSites.length === 0" class="card flex flex-col items-center gap-3 py-10 text-center">
       <Globe2 class="h-8 w-8 text-slate-400" />
       <div class="text-sm font-medium">没有匹配的应用</div>
-      <p class="max-w-md text-sm text-slate-500">{{ sites.length ? '换个关键词试试。' : '先创建一个应用，再在应用详情里添加脚本文件和脚本条目。' }}</p>
+      <p class="max-w-md text-sm text-slate-500">{{ sites.length ? '换个关键词或筛选条件试试。' : '先创建一个应用，再在应用详情里添加脚本文件和脚本条目。' }}</p>
     </div>
 
     <template v-else>
