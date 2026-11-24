@@ -4,12 +4,17 @@ import { PrismaService } from '../../database/prisma.service';
 import { AppConfigService } from '../../config/config.module';
 import { SecurityService } from '../../common/security.service';
 
+export const ONBOARDING_COMPLETED_KEY = 'onboarding.completedAt';
+export const DEFAULT_SCRIPT_SOURCE_URL =
+  'https://raw.githubusercontent.com/haikuotianko/free-welfare-scripts/main/index.json';
+
 const KEYS = {
   yybBaseUrl: 'yyb.baseUrl',
   yybIntegrationToken: 'yyb.integrationToken',
   yybProtocolToken: 'yyb.protocolToken',
   scriptSourceUrl: 'script.sourceUrl',
   serverchanToken: 'notify.serverchanToken',
+  onboardingCompleted: ONBOARDING_COMPLETED_KEY,
 } as const;
 
 export interface SettingsUpdate {
@@ -18,6 +23,7 @@ export interface SettingsUpdate {
   yybProtocolToken?: string;
   scriptSourceUrl?: string;
   serverchanToken?: string;
+  onboardingCompleted?: boolean;
 }
 
 @Injectable()
@@ -31,14 +37,19 @@ export class SettingsService {
   async getPublic() {
     const yybBaseUrl = await this.getString(KEYS.yybBaseUrl) ?? this.config.get('YYB_BASE_URL');
     const integrationToken = await this.getString(KEYS.yybIntegrationToken) ?? this.config.get('YYB_INTEGRATION_TOKEN');
-    const scriptSourceUrl = await this.getString(KEYS.scriptSourceUrl) ?? this.config.get('SCRIPT_SOURCE_URL');
+    const scriptSourceUrl =
+      (await this.getString(KEYS.scriptSourceUrl)) ??
+      this.config.get('SCRIPT_SOURCE_URL') ??
+      DEFAULT_SCRIPT_SOURCE_URL;
     const serverchanToken = await this.getString(KEYS.serverchanToken) ?? this.config.get('SERVERCHAN_TOKEN');
+    const onboardingCompleted = Boolean(await this.getString(KEYS.onboardingCompleted));
 
     return {
       yybBaseUrl: yybBaseUrl ?? '',
       yybConfigured: Boolean(integrationToken),
-      scriptSourceUrl: scriptSourceUrl ?? '',
+      scriptSourceUrl,
       serverchanConfigured: Boolean(serverchanToken),
+      onboardingCompleted,
     };
   }
 
@@ -52,6 +63,15 @@ export class SettingsService {
 
     for (const [key, value, encrypted] of writes) {
       await this.setString(key, value, encrypted);
+    }
+    if (input.onboardingCompleted !== undefined) {
+      if (input.onboardingCompleted) {
+        await this.setString(KEYS.onboardingCompleted, new Date().toISOString(), false);
+      } else {
+        await this.prisma.client.setting.deleteMany({
+          where: { key: KEYS.onboardingCompleted },
+        });
+      }
     }
     return this.getPublic();
   }

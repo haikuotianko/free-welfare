@@ -186,6 +186,10 @@ export class AppStoreService {
     return this.scripts.syncSource(id);
   }
 
+  testSource(indexUrl: string) {
+    return this.scripts.testSource(indexUrl);
+  }
+
   async removeSource(id: string) {
     const source = await this.prisma.client.scriptSource.findUnique({ where: { id } });
     if (!source) throw new AppError('not_found', '应用源不存在', 404);

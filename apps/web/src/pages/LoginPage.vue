@@ -15,7 +15,7 @@ async function submit() {
   loading.value = true;
   try {
     await auth.login(username.value, password.value);
-    await router.push('/');
+    await router.push(auth.onboardingCompleted ? '/' : '/onboarding');
   } catch (e) {
     error.value = e instanceof Error ? e.message : '登录失败';
   } finally {

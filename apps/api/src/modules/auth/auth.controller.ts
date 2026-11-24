@@ -25,7 +25,7 @@ export class AuthController {
     const input = parseInput(setupSchema, body);
     const result = await this.auth.setup(input, request.ip, request.headers['user-agent']);
     this.auth.setSessionCookie(reply, result.token);
-    return { admin: result.admin };
+    return { admin: result.admin, onboardingCompleted: result.onboardingCompleted };
   }
 
   @Post('login')
@@ -37,7 +37,7 @@ export class AuthController {
     const input = parseInput(loginSchema, body);
     const result = await this.auth.login(input, request.ip, request.headers['user-agent']);
     this.auth.setSessionCookie(reply, result.token);
-    return { admin: result.admin };
+    return { admin: result.admin, onboardingCompleted: result.onboardingCompleted };
   }
 
   @Post('logout')

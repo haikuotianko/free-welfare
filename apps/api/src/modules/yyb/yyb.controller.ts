@@ -19,6 +19,12 @@ const requestQuerySchema = z.object({
   siteId: z.string().trim().max(60).optional(),
 });
 
+const connectionTestSchema = z.object({
+  baseUrl: z.string().trim().url().optional(),
+  integrationToken: z.string().trim().min(1).optional(),
+  protocolToken: z.string().trim().min(1).optional(),
+});
+
 @Controller('api/v1')
 @UseGuards(SessionGuard)
 export class YybController {
@@ -27,6 +33,11 @@ export class YybController {
   @Get('yyb/health')
   health() {
     return this.yyb.health();
+  }
+
+  @Post('yyb/test')
+  test(@Body() body: unknown) {
+    return this.yyb.testConnection(parseInput(connectionTestSchema, body ?? {}));
   }
 
   @Post('yyb/sync')

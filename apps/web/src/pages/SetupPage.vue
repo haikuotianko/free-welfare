@@ -15,7 +15,7 @@ async function submit() {
   loading.value = true;
   try {
     await auth.setup(username.value, password.value);
-    await router.push('/');
+    await router.push('/onboarding');
   } catch (e) {
     error.value = e instanceof Error ? e.message : '初始化失败';
   } finally {

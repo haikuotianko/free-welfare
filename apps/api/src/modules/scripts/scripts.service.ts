@@ -123,6 +123,48 @@ export class ScriptsService {
     return this.prisma.client.scriptSource.create({ data: input });
   }
 
+  async testSource(indexUrl: string) {
+    if (!/^(https?:\/\/|local:\/\/)/i.test(indexUrl)) {
+      throw new AppError('validation_failed', '应用源地址只支持 http(s) 或 local://', 400);
+    }
+    try {
+      const text = await readSourceText(indexUrl);
+      const bytes = Buffer.byteLength(text, 'utf8');
+      if (bytes > MAX_INDEX_BYTES) {
+        throw new Error('index.json 超过 2MB');
+      }
+      let raw: unknown;
+      try {
+        raw = JSON.parse(text);
+      } catch {
+        throw new Error('index.json 不是合法 JSON');
+      }
+      const parsed = indexSchema.parse(raw);
+      const appScripts = parsed.apps.reduce(
+        (sum, item) => sum + item.scripts.length,
+        0,
+      );
+      return {
+        ok: true,
+        indexUrl,
+        apps: parsed.apps.length,
+        scripts: parsed.scripts.length + appScripts,
+        topLevelScripts: parsed.scripts.length,
+        appScripts,
+        generatedAt: parsed.generated_at ?? null,
+        bytes,
+      };
+    } catch (error) {
+      const message =
+        error instanceof z.ZodError
+          ? `index.json 格式不合法：${error.issues[0]?.path.join('.') || ''} ${error.issues[0]?.message || ''}`.trim()
+          : error instanceof Error
+            ? error.message
+            : String(error);
+      throw new AppError('source_test_failed', `应用源检测失败：${message}`, 502);
+    }
+  }
+
   async syncSource(id: string) {
     const source = await this.prisma.client.scriptSource.findUnique({ where: { id } });
     if (!source) throw new AppError('not_found', '订阅源不存在', 404);
@@ -272,9 +314,16 @@ export class ScriptsService {
         where: { id: source.id },
         data: { lastSyncedAt: new Date(), lastError: null },
       });
+      const appScripts = parsed.apps.reduce(
+        (sum, item) => sum + item.scripts.length,
+        0,
+      );
       return {
         sourceId: source.id,
         synced,
+        topLevelScripts: synced,
+        appScripts,
+        scripts: synced + appScripts,
         apps: parsed.apps.length,
         generatedAt: parsed.generated_at ?? null,
       };

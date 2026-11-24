@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from './stores/auth';
 import SetupPage from './pages/SetupPage.vue';
 import LoginPage from './pages/LoginPage.vue';
+import OnboardingPage from './pages/OnboardingPage.vue';
 import DashboardPage from './pages/DashboardPage.vue';
 import AccountsPage from './pages/AccountsPage.vue';
 import SitesPage from './pages/SitesPage.vue';
@@ -31,6 +32,7 @@ export const router = createRouter({
   routes: [
     { path: '/setup', name: 'setup', component: SetupPage, meta: { public: true, title: '初始化' } },
     { path: '/login', name: 'login', component: LoginPage, meta: { public: true, title: '登录' } },
+    { path: '/onboarding', name: 'onboarding', component: OnboardingPage, meta: { title: '新手引导' } },
     { path: '/', name: 'dashboard', component: DashboardPage, meta: { title: '总览' } },
     { path: '/accounts', name: 'accounts', component: AccountsPage, meta: { title: '账号' } },
     { path: '/sites', name: 'sites', component: SitesPage, meta: { title: '应用' } },
@@ -60,10 +62,14 @@ router.beforeEach(async (to) => {
     return to.name === 'setup' ? true : { name: 'setup' };
   }
   if (!auth.admin) {
+    if (to.name === 'setup') return { name: 'login' };
     return to.meta.public ? true : { name: 'login' };
   }
   if (to.name === 'setup' || to.name === 'login') {
     return { name: 'dashboard' };
+  }
+  if (!auth.onboardingCompleted && to.name !== 'onboarding') {
+    return { name: 'onboarding' };
   }
   return true;
 });

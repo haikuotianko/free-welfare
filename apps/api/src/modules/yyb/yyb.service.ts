@@ -46,6 +46,119 @@ export class YybService {
     return { ok: response.ok, status: response.status, body };
   }
 
+  async testConnection(input: {
+    baseUrl?: string;
+    integrationToken?: string;
+    protocolToken?: string;
+  } = {}) {
+    const config = await this.settings.getYybConfig();
+    const baseUrl = (input.baseUrl?.trim() || config.baseUrl || '').replace(/\/+$/, '');
+    if (!baseUrl) {
+      throw new AppError('yyb_not_configured', '请先填写 YYB 地址（YYB_BASE_URL）', 400);
+    }
+    let parsed: URL;
+    try {
+      parsed = new URL(baseUrl);
+    } catch {
+      throw new AppError('validation_failed', 'YYB 地址不是合法 URL', 400);
+    }
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      throw new AppError('validation_failed', 'YYB 地址只支持 http(s)', 400);
+    }
+
+    const integrationToken =
+      input.integrationToken?.trim() || config.integrationToken || '';
+    const protocolToken = input.protocolToken?.trim() || config.protocolToken || '';
+
+    const checks: Array<{
+      key: string;
+      label: string;
+      ok: boolean;
+      skipped?: boolean;
+      httpStatus: number | null;
+      message: string;
+    }> = [];
+
+    const health = await this.probeYyb(baseUrl, '/health');
+    checks.push({
+      key: 'health',
+      label: 'YYB 服务',
+      ok: health.ok,
+      httpStatus: health.status,
+      message: health.ok
+        ? `HTTP ${health.status}，服务可达`
+        : this.probeError(health),
+    });
+
+    const manifest = await this.probeYyb(baseUrl, '/integration/module-manifest.json');
+    checks.push({
+      key: 'integration',
+      label: '集成接口',
+      ok: manifest.ok,
+      httpStatus: manifest.status,
+      message: manifest.ok
+        ? `HTTP ${manifest.status}，集成模块已启用`
+        : manifest.status === 404
+          ? 'HTTP 404，YYB 未启用集成接口或版本过旧'
+          : this.probeError(manifest),
+    });
+
+    if (integrationToken) {
+      const accounts = await this.probeYyb(baseUrl, '/integration/accounts', {
+        headers: { Authorization: `Bearer ${integrationToken}` },
+      });
+      const count = Array.isArray(accounts.body?.data?.items)
+        ? accounts.body.data.items.length
+        : Array.isArray(accounts.body?.items)
+          ? accounts.body.items.length
+          : undefined;
+      checks.push({
+        key: 'accounts',
+        label: '集成令牌',
+        ok: accounts.ok,
+        httpStatus: accounts.status,
+        message: accounts.ok
+          ? `HTTP ${accounts.status}，读取到 ${count ?? 0} 个账号`
+          : accounts.status === 401
+            ? 'HTTP 401，YYB_INTEGRATION_TOKEN 与 YYB 不一致'
+            : accounts.status === 503
+              ? 'HTTP 503，YYB 未启用集成接口（容器未读取 YYB_INTEGRATION_TOKEN）'
+              : this.probeError(accounts),
+      });
+    } else {
+      checks.push({
+        key: 'accounts',
+        label: '集成令牌',
+        ok: false,
+        httpStatus: null,
+        message: '未填写 YYB_INTEGRATION_TOKEN，无法同步账号',
+      });
+    }
+
+    checks.push({
+      key: 'protocol',
+      label: '协议令牌',
+      ok: true,
+      skipped: true,
+      httpStatus: null,
+      message: protocolToken
+        ? '已填写 YYB_PROTOCOL_TOKEN；协议接口需要实际扫码才会验证，本次不创建扫码会话'
+        : '未填写 YYB_PROTOCOL_TOKEN（可选，仅扫码添加账号需要）',
+    });
+
+    const ok = checks
+      .filter((check) => !check.skipped)
+      .every((check) => check.ok);
+    return {
+      ok,
+      baseUrl,
+      checks,
+      message: ok
+        ? 'YYB 服务与集成接口可用'
+        : 'YYB 连接未完全通过，请查看下方结果',
+    };
+  }
+
   async syncAccounts() {
     const { baseUrl, integrationToken } = await this.requireConfig();
     const { response, body } = await this.yybRequest({
@@ -521,6 +634,84 @@ export class YybService {
       page: input.page,
       pageSize: input.pageSize,
     };
+  }
+
+  private probeError(result: {
+    status: number | null;
+    body: any;
+    error?: string;
+  }): string {
+    if (result.error) return result.error;
+    const message =
+      typeof result.body === 'object' && result.body
+        ? result.body.msg || result.body.message
+        : undefined;
+    if (message) return `HTTP ${result.status ?? '—'}：${String(message).slice(0, 200)}`;
+    return `HTTP ${result.status ?? '—'}，服务返回异常`;
+  }
+
+  private async probeYyb(
+    baseUrl: string,
+    path: string,
+    init?: RequestInit,
+  ): Promise<{
+    ok: boolean;
+    status: number | null;
+    body: any;
+    error?: string;
+  }> {
+    const started = Date.now();
+    const method = String(init?.method ?? 'GET').toUpperCase();
+    let response: Response | null = null;
+    try {
+      response = await fetch(baseUrl + path, {
+        ...init,
+        signal: AbortSignal.timeout(10_000),
+      });
+      const text = await response.text();
+      let body: any = null;
+      if (text) {
+        try {
+          body = JSON.parse(text);
+        } catch {
+          body = text.slice(0, 300);
+        }
+      }
+      await this.logYyb({
+        type: 'test-connection',
+        method,
+        path,
+        status: response.ok ? 'success' : 'failed',
+        httpStatus: response.status,
+        durationMs: Date.now() - started,
+        errorMessage: response.ok
+          ? null
+          : this.probeError({ status: response.status, body }),
+      });
+      return { ok: response.ok, status: response.status, body };
+    } catch (error) {
+      const rawMessage = error instanceof Error ? error.message : String(error);
+      const message = /abort|timeout/i.test(rawMessage)
+        ? '连接超时（10 秒）'
+        : /fetch failed|ECONNREFUSED|ENOTFOUND|EAI_AGAIN/i.test(rawMessage)
+          ? `无法连接：${rawMessage}`
+          : rawMessage;
+      await this.logYyb({
+        type: 'test-connection',
+        method,
+        path,
+        status: 'failed',
+        httpStatus: response?.status ?? null,
+        durationMs: Date.now() - started,
+        errorMessage: message,
+      });
+      return {
+        ok: false,
+        status: response?.status ?? null,
+        body: null,
+        error: message,
+      };
+    }
   }
 
   private async yybRequest(input: {

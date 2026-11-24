@@ -12,6 +12,10 @@ const sourceSchema = z.object({
   trustLevel: z.enum(['official', 'community', 'custom']).default('official'),
 });
 
+const testSourceSchema = z.object({
+  indexUrl: z.string().trim().min(1).max(1000),
+});
+
 const installSchema = z.object({
   bindAll: z.boolean().default(false),
   enableScripts: z.boolean().default(false),
@@ -30,6 +34,11 @@ export class AppStoreController {
   @Post('sources')
   createSource(@Body() body: unknown) {
     return this.store.createSource(parseInput(sourceSchema, body));
+  }
+
+  @Post('sources/test')
+  testSource(@Body() body: unknown) {
+    return this.store.testSource(parseInput(testSourceSchema, body).indexUrl);
   }
 
   @Post('sources/:id/sync')

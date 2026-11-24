@@ -14,6 +14,7 @@ import {
 import {
   api,
   type AppSource,
+  type SourceSyncResult,
   type StoreApp,
   type StoreInstallResult,
 } from '../lib/api';
@@ -137,10 +138,10 @@ async function syncSource(source: AppSource) {
   message.value = '';
   busy.value = { ...busy.value, [source.id]: 'sync' };
   try {
-    const result = await api.post<{ synced: number; apps: number }>(
+    const result = await api.post<SourceSyncResult>(
       `/app-store/sources/${source.id}/sync`,
     );
-    message.value = `「${source.name}」已同步：${result.apps} 个应用、${result.synced} 个脚本版本`;
+    message.value = `「${source.name}」已同步：${result.apps} 个应用、${result.scripts ?? result.synced} 个脚本`;
     await load();
   } catch (e) {
     error.value = e instanceof Error ? e.message : '同步失败';

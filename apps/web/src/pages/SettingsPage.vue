@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue';
-import { Bell, ListOrdered, Save, Server } from 'lucide-vue-next';
+import { Bell, CheckCircle2, Circle, ListOrdered, RefreshCw, Save, Server } from 'lucide-vue-next';
 import {
   api,
   type QueueConfig,
   type QueueStatus,
   type Settings,
+  type SourceTestResult,
+  type YybTestResult,
 } from '../lib/api';
 
 const settings = ref<Settings | null>(null);
@@ -17,6 +19,10 @@ const serverchanToken = ref('');
 const message = ref('');
 const error = ref('');
 const loading = ref(false);
+const yybTesting = ref(false);
+const yybTest = ref<YybTestResult | null>(null);
+const sourceTesting = ref(false);
+const sourceTest = ref<SourceTestResult | null>(null);
 
 const queueStatus = ref<QueueStatus | null>(null);
 const queueSaving = ref(false);
@@ -68,6 +74,52 @@ async function save() {
   }
 }
 
+async function testYyb() {
+  error.value = '';
+  message.value = '';
+  yybTest.value = null;
+  if (!yybBaseUrl.value.trim() && !settings.value?.yybBaseUrl) {
+    error.value = '请先填写 YYB 地址';
+    return;
+  }
+  yybTesting.value = true;
+  try {
+    const payload: Record<string, string> = {};
+    if (yybBaseUrl.value.trim()) payload.baseUrl = yybBaseUrl.value.trim();
+    if (yybIntegrationToken.value.trim()) {
+      payload.integrationToken = yybIntegrationToken.value.trim();
+    }
+    if (yybProtocolToken.value.trim()) {
+      payload.protocolToken = yybProtocolToken.value.trim();
+    }
+    yybTest.value = await api.post<YybTestResult>('/yyb/test', payload);
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'YYB 连通测试失败';
+  } finally {
+    yybTesting.value = false;
+  }
+}
+
+async function testSource() {
+  error.value = '';
+  message.value = '';
+  sourceTest.value = null;
+  if (!scriptSourceUrl.value.trim()) {
+    error.value = '请先填写脚本源 index.json 地址';
+    return;
+  }
+  sourceTesting.value = true;
+  try {
+    sourceTest.value = await api.post<SourceTestResult>('/app-store/sources/test', {
+      indexUrl: scriptSourceUrl.value.trim(),
+    });
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : '脚本源测试失败';
+  } finally {
+    sourceTesting.value = false;
+  }
+}
+
 async function testNotification() {
   error.value = '';
   message.value = '';
@@ -110,7 +162,8 @@ onMounted(load);
     <div>
       <h2 class="text-lg font-semibold">设置</h2>
       <p class="text-sm text-slate-500">YYB、脚本源、通知、运行队列、时间。密钥只显示“已配置”。</p>
-      <RouterLink to="/notifications" class="mt-1 inline-block text-xs text-brand-600 hover:underline">查看通知记录 →</RouterLink>
+      <RouterLink to="/onboarding" class="mt-1 inline-block text-xs text-brand-600 hover:underline">新手引导 →</RouterLink>
+      <RouterLink to="/notifications" class="ml-3 mt-1 inline-block text-xs text-brand-600 hover:underline">查看通知记录 →</RouterLink>
       <RouterLink to="/time" class="ml-3 mt-1 inline-block text-xs text-brand-600 hover:underline">时间设置 →</RouterLink>
       <RouterLink to="/yyb-requests" class="ml-3 mt-1 inline-block text-xs text-brand-600 hover:underline">YYB 请求记录 →</RouterLink>
       <RouterLink to="/forms" class="ml-3 mt-1 inline-block text-xs text-brand-600 hover:underline">表单配置 →</RouterLink>
@@ -121,27 +174,73 @@ onMounted(load);
     <p v-if="message" class="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200">{{ message }}</p>
 
     <form class="card space-y-4" @submit.prevent="save">
-      <div class="flex items-center gap-2">
-        <Server class="h-4 w-4 text-slate-500" />
-        <h3 class="text-sm font-semibold">YYB 连接</h3>
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <Server class="h-4 w-4 text-slate-500" />
+          <h3 class="text-sm font-semibold">YYB 连接</h3>
+        </div>
+        <button type="button" class="btn-ghost !px-3 !py-1.5" :disabled="yybTesting" @click="testYyb">
+          <RefreshCw class="h-4 w-4" :class="{ 'animate-spin': yybTesting }" />
+          {{ yybTesting ? '测试中…' : '测试连通' }}
+        </button>
       </div>
       <div class="grid gap-3 sm:grid-cols-2">
-        <div>
-          <label class="label">YYB 地址</label>
-          <input v-model="yybBaseUrl" class="input" placeholder="http://yyb-go:8000" />
+        <div class="sm:col-span-2">
+          <label class="label flex flex-wrap items-center gap-1.5">
+            YYB 地址
+            <code class="rounded bg-slate-100 px-1 py-0.5 font-mono text-[10px] text-slate-500 dark:bg-slate-800 dark:text-slate-400">YYB_BASE_URL</code>
+          </label>
+          <input v-model="yybBaseUrl" class="input font-mono text-xs" placeholder="http://yyb-go:8000" @input="yybTest = null" />
         </div>
         <div>
-          <label class="label">集成令牌（已配置：{{ settings?.yybConfigured ? '是' : '否' }}）</label>
-          <input v-model="yybIntegrationToken" type="password" class="input" placeholder="留空不修改" />
+          <label class="label flex flex-wrap items-center gap-1.5">
+            集成令牌
+            <code class="rounded bg-slate-100 px-1 py-0.5 font-mono text-[10px] text-slate-500 dark:bg-slate-800 dark:text-slate-400">YYB_INTEGRATION_TOKEN</code>
+            <span class="text-[11px] font-normal text-slate-400">已配置：{{ settings?.yybConfigured ? '是' : '否' }}</span>
+          </label>
+          <input v-model="yybIntegrationToken" type="password" class="input" placeholder="留空不修改" autocomplete="off" @input="yybTest = null" />
         </div>
         <div>
-          <label class="label">协议令牌（可选）</label>
-          <input v-model="yybProtocolToken" type="password" class="input" placeholder="留空不修改" />
+          <label class="label flex flex-wrap items-center gap-1.5">
+            协议令牌（可选）
+            <code class="rounded bg-slate-100 px-1 py-0.5 font-mono text-[10px] text-slate-500 dark:bg-slate-800 dark:text-slate-400">YYB_PROTOCOL_TOKEN</code>
+          </label>
+          <input v-model="yybProtocolToken" type="password" class="input" placeholder="留空不修改" autocomplete="off" @input="yybTest = null" />
         </div>
-        <div>
+        <div class="sm:col-span-2">
           <label class="label">脚本源 index.json</label>
-          <input v-model="scriptSourceUrl" class="input" placeholder="https://raw.githubusercontent.com/.../index.json" />
+          <div class="flex flex-col gap-2 sm:flex-row">
+            <input v-model="scriptSourceUrl" class="input font-mono text-xs" placeholder="https://raw.githubusercontent.com/.../index.json" @input="sourceTest = null" />
+            <button type="button" class="btn-ghost shrink-0" :disabled="sourceTesting" @click="testSource">
+              <RefreshCw class="h-4 w-4" :class="{ 'animate-spin': sourceTesting }" />
+              {{ sourceTesting ? '测试中…' : '测试源' }}
+            </button>
+          </div>
+          <p v-if="sourceTest" class="mt-1 text-[11px] text-emerald-600 dark:text-emerald-300">
+            连接成功：{{ sourceTest.scripts }} 个脚本、{{ sourceTest.apps }} 个应用（顶层 {{ sourceTest.topLevelScripts }}，应用内 {{ sourceTest.appScripts }}）
+          </p>
         </div>
+      </div>
+
+      <div v-if="yybTest" class="rounded-xl border border-slate-200 p-3 dark:border-slate-800">
+        <div
+          class="flex items-center gap-2 text-sm font-medium"
+          :class="yybTest.ok ? 'text-emerald-700 dark:text-emerald-200' : 'text-amber-700 dark:text-amber-200'"
+        >
+          <CheckCircle2 v-if="yybTest.ok" class="h-4 w-4" />
+          <Circle v-else class="h-4 w-4" />
+          {{ yybTest.message }}
+        </div>
+        <ul class="mt-2 space-y-1.5 text-xs">
+          <li v-for="check in yybTest.checks" :key="check.key" class="flex items-start gap-2">
+            <CheckCircle2 v-if="check.ok && !check.skipped" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" />
+            <Circle v-else class="mt-0.5 h-3.5 w-3.5 shrink-0" :class="check.skipped ? 'text-slate-400' : 'text-amber-500'" />
+            <span>
+              <span class="font-medium">{{ check.label }}</span>
+              <span class="text-slate-500"> · {{ check.message }}</span>
+            </span>
+          </li>
+        </ul>
       </div>
 
       <div class="flex items-center gap-2 pt-2">

@@ -53,6 +53,7 @@ export interface Admin {
 export interface AuthStatus {
   initialized: boolean;
   authenticated: boolean;
+  onboardingCompleted: boolean;
   admin?: Admin;
 }
 
@@ -560,6 +561,44 @@ export interface Settings {
   yybConfigured: boolean;
   scriptSourceUrl: string;
   serverchanConfigured: boolean;
+  onboardingCompleted: boolean;
+}
+
+export interface YybTestCheck {
+  key: string;
+  label: string;
+  ok: boolean;
+  skipped?: boolean;
+  httpStatus?: number | null;
+  message: string;
+}
+
+export interface YybTestResult {
+  ok: boolean;
+  baseUrl: string;
+  checks: YybTestCheck[];
+  message: string;
+}
+
+export interface SourceTestResult {
+  ok: boolean;
+  indexUrl: string;
+  apps: number;
+  scripts: number;
+  topLevelScripts: number;
+  appScripts: number;
+  generatedAt?: string | null;
+  bytes: number;
+}
+
+export interface SourceSyncResult {
+  sourceId: string;
+  synced: number;
+  topLevelScripts?: number;
+  appScripts?: number;
+  scripts?: number;
+  apps: number;
+  generatedAt?: string | null;
 }
 
 export interface ClockUpcomingItem {

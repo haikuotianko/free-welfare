@@ -10,6 +10,7 @@ const settingsUpdateSchema = z.object({
   yybProtocolToken: z.string().min(1).optional(),
   scriptSourceUrl: z.string().url().optional(),
   serverchanToken: z.string().min(1).optional(),
+  onboardingCompleted: z.boolean().optional(),
 });
 
 @Controller('api/v1/settings')
