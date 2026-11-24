@@ -256,7 +256,7 @@ async function ensureRunAccount(): Promise<{
   }
 
   const confirmed = window.confirm(
-    `当前账号「${selectedName}」还没有绑定到「${siteName}」。\n\n是否绑定并运行？`,
+    `「${siteName}」下没有账号「${selectedName}」。\n\n是否绑定并运行？`,
   );
   if (!confirmed) return { account: null, cancelled: true };
 
