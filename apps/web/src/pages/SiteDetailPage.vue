@@ -224,7 +224,7 @@ function siteAccountFor(wechatAccountId: string) {
 
 /**
  * 运行脚本前确认用哪个应用账号。
- * 顶部选了当前账号时，优先使用它；还没绑定到该应用时自动绑定，避免误用其他账号。
+ * 顶部选了当前账号时，优先使用它；还没绑定到该应用时先让用户确认，再绑定并运行。
  */
 async function ensureRunAccount(): Promise<{
   account: SiteAccountSummary | null;
