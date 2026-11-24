@@ -120,10 +120,17 @@ const formValues = reactive<Record<string, Record<string, string>>>({});
 const addTemplateId = ref('');
 const formsSaving = ref(false);
 
+const sortedAccounts = computed(() =>
+  [...accountStore.accounts].sort(
+    (a, b) => Number(Boolean(a.disabled)) - Number(Boolean(b.disabled)),
+  ),
+);
+
 const selectedAccount = computed(
   () =>
-    accountStore.accounts.find((account) => account.id === selectedAccountId.value) ??
-    accountStore.accounts[0] ??
+    sortedAccounts.value.find((account) => account.id === selectedAccountId.value) ??
+    sortedAccounts.value.find((account) => !account.disabled) ??
+    sortedAccounts.value[0] ??
     null,
 );
 
@@ -167,7 +174,10 @@ async function load() {
     templates.value = templateList;
     await accountStore.load();
     if (!accountStore.accounts.some((account) => account.id === selectedAccountId.value)) {
-      selectedAccountId.value = accountStore.accounts[0]?.id ?? '';
+      selectedAccountId.value =
+        sortedAccounts.value.find((account) => !account.disabled)?.id ??
+        sortedAccounts.value[0]?.id ??
+        '';
     }
     const formAccount = typeof route.query.forms === 'string' ? route.query.forms : '';
     if (formAccount && accountStore.accounts.some((account) => account.id === formAccount)) {
@@ -293,9 +303,8 @@ async function refresh(account: AccountOverview) {
   }
 }
 
-async function toggleAccountDisabled(account: AccountOverview, event: Event) {
-  const input = event.target as HTMLInputElement;
-  const disabled = input.checked;
+async function toggleAccountEnabled(account: AccountOverview) {
+  const disabled = !account.disabled;
   togglingAccount.value = account.id;
   error.value = '';
   message.value = '';
@@ -306,7 +315,6 @@ async function toggleAccountDisabled(account: AccountOverview, event: Event) {
       ? `已停用「${account.displayName}」`
       : `已启用「${account.displayName}」`;
   } catch (e) {
-    input.checked = Boolean(account.disabled);
     error.value = e instanceof Error ? e.message : '保存失败';
   } finally {
     togglingAccount.value = '';
@@ -960,7 +968,7 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <div v-if="accountStore.accounts.length === 0" class="card flex flex-col items-center gap-3 py-10 text-center">
+    <div v-if="sortedAccounts.length === 0" class="card flex flex-col items-center gap-3 py-10 text-center">
       <ScanLine class="h-8 w-8 text-slate-400" />
       <div class="text-sm font-medium">还没有账号</div>
       <p class="max-w-md text-sm text-slate-500">
@@ -971,7 +979,7 @@ onUnmounted(() => {
     <template v-else>
       <div class="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 xl:grid-cols-3">
         <article
-          v-for="account in accountStore.accounts"
+          v-for="account in sortedAccounts"
           :key="account.id"
           class="card w-[85vw] max-w-[20rem] shrink-0 snap-start cursor-pointer space-y-2 !p-3 transition hover:border-brand-300 dark:hover:border-brand-700 sm:w-auto sm:max-w-none"
           :class="[
@@ -1025,19 +1033,25 @@ onUnmounted(() => {
             <span>表单 <b class="text-slate-700 dark:text-slate-200">{{ account.accountForms.length }}</b></span>
           </div>
           <div class="flex flex-wrap items-center gap-1.5">
-            <label
-              class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 px-2 py-1 text-[11px] text-slate-600 dark:border-slate-700 dark:text-slate-300"
-              @click.stop
+            <button
+              type="button"
+              role="switch"
+              :aria-checked="!account.disabled"
+              class="inline-flex items-center gap-2 text-[11px] text-slate-500 disabled:opacity-50"
+              :disabled="togglingAccount === account.id"
+              @click.stop="toggleAccountEnabled(account)"
             >
-              <input
-                type="checkbox"
-                class="h-3.5 w-3.5 rounded border-slate-300 text-brand-600 focus:ring-brand-500 dark:border-slate-600 dark:bg-slate-800"
-                :checked="account.disabled"
-                :disabled="togglingAccount === account.id"
-                @change="toggleAccountDisabled(account, $event)"
-              />
-              不启用
-            </label>
+              <span>{{ account.disabled ? '不启用' : '启用' }}</span>
+              <span
+                class="relative h-5 w-9 rounded-full transition"
+                :class="account.disabled ? 'bg-slate-300 dark:bg-slate-600' : 'bg-brand-600'"
+              >
+                <span
+                  class="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition"
+                  :class="account.disabled ? '' : 'translate-x-4'"
+                />
+              </span>
+            </button>
             <button type="button" class="btn-ghost !px-2 !py-1 text-[11px]" title="账号配置、执行偏移和表单资料" @click.stop="openForms(account)">
               <Settings class="h-3.5 w-3.5" /> 配置
             </button>
